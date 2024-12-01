@@ -1,9 +1,8 @@
 fn part1(input: &str) -> usize {
     let list = input
         .lines()
-        .into_iter()
-        .map(|input| {
-            let (l, r) = input.split_at(input.len() / 2);
+        .map(|line| {
+            let (l, r) = line.split_at(line.len() / 2);
             (
                 l.trim().parse::<usize>().unwrap(),
                 r.trim().parse::<usize>().unwrap(),
@@ -23,9 +22,8 @@ fn part1(input: &str) -> usize {
 fn part2(input: &str) -> usize {
     let list = input
         .lines()
-        .into_iter()
-        .map(|input| {
-            let (l, r) = input.split_at(input.len() / 2);
+        .map(|line| {
+            let (l, r) = line.split_at(line.len() / 2);
             (
                 l.trim().parse::<usize>().unwrap(),
                 r.trim().parse::<usize>().unwrap(),
