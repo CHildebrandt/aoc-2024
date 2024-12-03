@@ -1,48 +1,34 @@
 fn part1(input: &str) -> usize {
-    let rgx = regex::Regex::new(r"mul\(\d+,\d+\)").unwrap();
-    rgx.find_iter(input)
+    let rgx = regex::Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
+    rgx.captures_iter(input)
         .filter_map(|m| {
-            let mut nums = m
-                .as_str()
-                .split("mul(")
-                .nth(1)?
-                .split(")")
-                .nth(0)?
-                .split(",");
-            let a = nums.next()?.parse::<usize>().ok()?;
-            let b = nums.next()?.parse::<usize>().ok()?;
-            Some(a * b)
+            Some(
+                m.get(1)?.as_str().parse::<usize>().ok()?
+                    * m.get(2)?.as_str().parse::<usize>().ok()?,
+            )
         })
         .sum()
 }
 
 fn part2(input: &str) -> usize {
-    let dos = regex::Regex::new(r"do\(\)").unwrap();
-    let donts = regex::Regex::new(r"don\'t\(\)").unwrap();
-    let mut instructions = dos.find_iter(input).collect::<Vec<_>>();
-    instructions.extend(donts.find_iter(input));
+    let do_rgx = regex::Regex::new(r"do\(\)").unwrap();
+    let dont_rgx = regex::Regex::new(r"don't\(\)").unwrap();
+    let mut instructions = do_rgx.find_iter(input).collect::<Vec<_>>();
+    instructions.extend(dont_rgx.find_iter(input));
     instructions.sort_by(|a, b| a.start().cmp(&b.start()));
-    let rgx = regex::Regex::new(r"mul\(\d+,\d+\)").unwrap();
-    rgx.find_iter(input)
+    let rgx = regex::Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
+    rgx.captures_iter(input)
         .filter_map(|m| {
-            match instructions.iter().rfind(|i| i.start() < m.start()) {
-                Some(i) => {
-                    if i.as_str().starts_with("don'") {
-                        return None;
-                    }
+            let m_start = m.get(0)?.start();
+            if let Some(i) = instructions.iter().rfind(|i| i.start() < m_start) {
+                if i.as_str().starts_with("don'") {
+                    return None;
                 }
-                None => (),
             };
-            let mut nums = m
-                .as_str()
-                .split("mul(")
-                .nth(1)?
-                .split(")")
-                .nth(0)?
-                .split(",");
-            let a = nums.next()?.parse::<usize>().ok()?;
-            let b = nums.next()?.parse::<usize>().ok()?;
-            Some(a * b)
+            Some(
+                m.get(1)?.as_str().parse::<usize>().ok()?
+                    * m.get(2)?.as_str().parse::<usize>().ok()?,
+            )
         })
         .sum()
 }
