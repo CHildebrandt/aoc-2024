@@ -99,35 +99,26 @@ fn part2(input: &str) -> usize {
         .lines()
         .map(|line| line.chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
-    let mut x_masses = 0;
-    for y in 1..input.len() - 1 {
-        for x in 1..input[0].len() - 1 {
-            let curr = input.get(y).unwrap().get(x).unwrap();
-            if *curr == 'A' {
-                match input
-                    .get(y - 1)
-                    .and_then(|row| row.get(x - 1))
-                    .zip(input.get(y + 1).and_then(|row| row.get(x + 1)))
-                    .zip(input.get(y - 1).and_then(|row| row.get(x + 1)))
-                    .zip(input.get(y + 1).and_then(|row| row.get(x - 1)))
+    let get = |y: usize, x: usize| -> Option<&char> { input.get(y).and_then(|row| row.get(x)) };
+    input.iter().enumerate().skip(1).fold(0, |acc, (y, row)| {
+        acc + row.iter().enumerate().skip(1).fold(0, |acc, (x, curr)| {
+            if curr == &'A' {
+                if let Some((((north_west, south_east), north_east), south_west)) =
+                    get(y - 1, x - 1)
+                        .zip(get(y + 1, x + 1))
+                        .zip(get(y - 1, x + 1))
+                        .zip(get(y + 1, x - 1))
                 {
-                    Some((((north_west, south_east), north_east), south_west)) => {
-                        match (north_west, south_east) {
-                            ('M', 'S') | ('S', 'M') => match (north_east, south_west) {
-                                ('M', 'S') | ('S', 'M') => {
-                                    x_masses += 1;
-                                }
-                                _ => {}
-                            },
-                            _ => {}
-                        }
+                    if matches!((north_west, south_east), ('M', 'S') | ('S', 'M'))
+                        && matches!((north_east, south_west), ('M', 'S') | ('S', 'M'))
+                    {
+                        return acc + 1;
                     }
-                    None => {}
                 }
             }
-        }
-    }
-    x_masses
+            acc
+        })
+    })
 }
 
 fn main() {
