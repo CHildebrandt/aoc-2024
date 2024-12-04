@@ -95,12 +95,44 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    0
+    let input = input
+        .lines()
+        .map(|line| line.chars().collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    let mut x_masses = 0;
+    for y in 1..input.len() - 1 {
+        for x in 1..input[0].len() - 1 {
+            let curr = input.get(y).unwrap().get(x).unwrap();
+            if *curr == 'A' {
+                match input
+                    .get(y - 1)
+                    .and_then(|row| row.get(x - 1))
+                    .zip(input.get(y + 1).and_then(|row| row.get(x + 1)))
+                    .zip(input.get(y - 1).and_then(|row| row.get(x + 1)))
+                    .zip(input.get(y + 1).and_then(|row| row.get(x - 1)))
+                {
+                    Some((((north_west, south_east), north_east), south_west)) => {
+                        match (north_west, south_east) {
+                            ('M', 'S') | ('S', 'M') => match (north_east, south_west) {
+                                ('M', 'S') | ('S', 'M') => {
+                                    x_masses += 1;
+                                }
+                                _ => {}
+                            },
+                            _ => {}
+                        }
+                    }
+                    None => {}
+                }
+            }
+        }
+    }
+    x_masses
 }
 
 fn main() {
     assert_eq!(part1(include_str!("./test")), 18);
-    assert_eq!(part1(include_str!("./input")), 0);
-    // assert_eq!(part2(include_str!("./test")), 0);
-    // assert_eq!(part2(include_str!("./input")), 0);
+    assert_eq!(part1(include_str!("./input")), 2358);
+    assert_eq!(part2(include_str!("./test")), 9);
+    assert_eq!(part2(include_str!("./input")), 1737);
 }
