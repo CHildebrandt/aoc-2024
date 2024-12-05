@@ -1,27 +1,27 @@
+use itertools::Itertools;
 use std::collections::HashSet;
 
+fn parse(input: &str) -> (Vec<(&str, &str)>, Vec<Vec<&str>>) {
+    let split_point = input.lines().position(|line| line.is_empty()).unwrap();
+    let ordering_rules = input
+        .lines()
+        .take(split_point)
+        .map(|line| line.split_once("|").unwrap())
+        .collect::<Vec<_>>();
+    let updates = input
+        .lines()
+        .skip(split_point + 1)
+        .map(|line| line.split(",").collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+    (ordering_rules, updates)
+}
+
 fn part1(input: &str) -> usize {
-    let (ordering_rules, updates) = input.split_once("\n\n").unwrap();
-    let ordering_rules = ordering_rules
-        .lines()
-        .map(|line| {
-            line.split_once("|")
-                .map(|(x, y)| (x.parse::<usize>().unwrap(), y.parse::<usize>().unwrap()))
-                .unwrap()
-        })
-        .collect::<Vec<_>>();
-    let updates = updates
-        .lines()
-        .map(|line| {
-            line.split(",")
-                .map(|num| num.parse::<usize>().unwrap())
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
+    let (ordering_rules, updates) = parse(input);
     let valid_updates = updates
         .iter()
         .filter(|page_nums| {
-            let mut set = HashSet::<usize>::new();
+            let mut set = HashSet::<&str>::new();
             page_nums.iter().all(|page_num| {
                 if set.iter().any(|visited| visited == page_num) {
                     false
@@ -39,31 +39,17 @@ fn part1(input: &str) -> usize {
         .collect::<Vec<_>>();
     valid_updates.iter().fold(0, |acc, instruction| {
         acc + instruction[(instruction.len() as f32 / 2.0).floor() as usize]
+            .parse::<usize>()
+            .unwrap()
     })
 }
 
 fn part2(input: &str) -> usize {
-    let (ordering_rules, updates) = input.split_once("\n\n").unwrap();
-    let ordering_rules = ordering_rules
-        .lines()
-        .map(|line| {
-            line.split_once("|")
-                .map(|(x, y)| (x.parse::<usize>().unwrap(), y.parse::<usize>().unwrap()))
-                .unwrap()
-        })
-        .collect::<Vec<_>>();
-    let updates = updates
-        .lines()
-        .map(|line| {
-            line.split(",")
-                .map(|num| num.parse::<usize>().unwrap())
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
-    let invalid_updates_sorted = updates
-        .iter()
+    let (ordering_rules, mut updates) = parse(input);
+    updates
+        .iter_mut()
         .filter(|page_nums| {
-            let mut set = HashSet::<usize>::new();
+            let mut set = HashSet::<&str>::new();
             !page_nums.iter().all(|page_num| {
                 if set.iter().any(|visited| visited == page_num) {
                     false
@@ -78,8 +64,7 @@ fn part2(input: &str) -> usize {
                 }
             })
         })
-        .map(|page_nums| {
-            let mut page_nums = page_nums.clone();
+        .update(|page_nums| {
             page_nums.sort_by(|a, b| {
                 if ordering_rules
                     .iter()
@@ -90,12 +75,12 @@ fn part2(input: &str) -> usize {
                     std::cmp::Ordering::Greater
                 }
             });
-            page_nums
         })
-        .collect::<Vec<_>>();
-    invalid_updates_sorted.iter().fold(0, |acc, instruction| {
-        acc + instruction[(instruction.len() as f32 / 2.0).floor() as usize]
-    })
+        .fold(0, |acc, instruction| {
+            acc + instruction[(instruction.len() as f32 / 2.0).floor() as usize]
+                .parse::<usize>()
+                .unwrap()
+        })
 }
 
 fn main() {
