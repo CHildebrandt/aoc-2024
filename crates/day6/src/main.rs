@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 enum Floor {
     Empty,
     Obstruction,
@@ -33,6 +33,16 @@ impl Direction {
             Direction::West => Direction::North,
         }
     }
+
+    fn from_char(c: char) -> Option<Self> {
+        match c {
+            '^' => Some(Direction::North),
+            'v' => Some(Direction::South),
+            '<' => Some(Direction::West),
+            '>' => Some(Direction::East),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -44,106 +54,50 @@ struct Guard {
 
 impl Guard {
     fn new(y: usize, x: usize, c: char) -> Option<Self> {
-        match c {
-            '^' => Some(Guard {
-                y,
-                x,
-                direction: Direction::North,
-            }),
-            'v' => Some(Guard {
-                y,
-                x,
-                direction: Direction::South,
-            }),
-            '<' => Some(Guard {
-                y,
-                x,
-                direction: Direction::West,
-            }),
-            '>' => Some(Guard {
-                y,
-                x,
-                direction: Direction::East,
-            }),
-            _ => None,
-        }
+        Direction::from_char(c).map(|direction| Self { y, x, direction })
     }
 
     fn position(&self) -> (usize, usize) {
         (self.y, self.x)
     }
 
-    fn direction(&self) -> Direction {
-        self.direction.clone()
+    fn key(&self) -> (usize, usize, Direction) {
+        (self.y, self.x, self.direction.clone())
     }
 
-    fn next(&mut self, map: &Vec<Vec<Floor>>) -> Option<(usize, usize)> {
-        match self.direction {
-            Direction::North => {
-                if self.y == 0 {
-                    None
-                } else {
-                    match map[self.y - 1][self.x] {
-                        Floor::Obstruction => {
-                            self.direction = self.direction.next();
-                        }
-                        Floor::Empty => {
-                            self.y -= 1;
-                        }
-                    }
-                    Some(self.position())
+    fn next(&mut self, map: &Vec<Vec<Floor>>) -> Option<(usize, usize, Direction)> {
+        if (self.y == 0 && self.direction == Direction::North)
+            || (self.y == map.len() - 1 && self.direction == Direction::South)
+            || (self.x == 0 && self.direction == Direction::West)
+            || (self.x == map[0].len() - 1 && self.direction == Direction::East)
+        {
+            None
+        } else {
+            let next_y = match self.direction {
+                Direction::North => self.y - 1,
+                Direction::South => self.y + 1,
+                _ => self.y,
+            };
+            let next_x = match self.direction {
+                Direction::East => self.x + 1,
+                Direction::West => self.x - 1,
+                _ => self.x,
+            };
+            match map[next_y][next_x] {
+                Floor::Obstruction => {
+                    self.direction = self.direction.next();
+                }
+                Floor::Empty => {
+                    self.y = next_y;
+                    self.x = next_x;
                 }
             }
-            Direction::South => {
-                if self.y == map.len() - 1 {
-                    None
-                } else {
-                    match map[self.y + 1][self.x] {
-                        Floor::Obstruction => {
-                            self.direction = self.direction.next();
-                        }
-                        Floor::Empty => {
-                            self.y += 1;
-                        }
-                    }
-                    Some(self.position())
-                }
-            }
-            Direction::East => {
-                if self.x == map[0].len() - 1 {
-                    None
-                } else {
-                    match map[self.y][self.x + 1] {
-                        Floor::Obstruction => {
-                            self.direction = self.direction.next();
-                        }
-                        Floor::Empty => {
-                            self.x += 1;
-                        }
-                    }
-                    Some(self.position())
-                }
-            }
-            Direction::West => {
-                if self.x == 0 {
-                    None
-                } else {
-                    match map[self.y][self.x - 1] {
-                        Floor::Obstruction => {
-                            self.direction = self.direction.next();
-                        }
-                        Floor::Empty => {
-                            self.x -= 1;
-                        }
-                    }
-                    Some(self.position())
-                }
-            }
+            Some(self.key())
         }
     }
 }
 
-fn part1(input: &str) -> usize {
+fn parse(input: &str) -> (Vec<Vec<Floor>>, Guard) {
     let (map, guard) =
         input
             .lines()
@@ -161,57 +115,48 @@ fn part1(input: &str) -> usize {
                 map.push(row);
                 (map, guard)
             });
-    let mut guard = guard.unwrap();
+    (map, guard.unwrap())
+}
+
+fn part1(input: &str) -> usize {
+    let (map, mut guard) = parse(input);
     let mut visited = HashSet::new();
     visited.insert(guard.position());
-    while let Some(position) = guard.next(&map) {
-        visited.insert(position);
+    while let Some((y, x, _)) = guard.next(&map) {
+        visited.insert((y, x));
     }
     visited.len()
 }
 
 fn part2(input: &str) -> usize {
-    let (map, guard) =
-        input
-            .lines()
-            .enumerate()
-            .fold((vec![], None), |(mut map, mut guard), (y, line)| {
-                let mut row = vec![];
-                for (x, c) in line.chars().enumerate() {
-                    if let Some(floor) = Floor::from_char(c) {
-                        row.push(floor);
-                    } else if let Some(g) = Guard::new(y, x, c) {
-                        guard = Some(g);
-                        row.push(Floor::Empty);
-                    }
-                }
-                map.push(row);
-                (map, guard)
-            });
-    let guard = guard.unwrap();
+    let (mut map, guard) = parse(input);
+    let mut visited = HashSet::new();
+    let mut guard_check = guard.clone();
+    while let Some((y, x, _)) = guard_check.next(&map) {
+        visited.insert((y, x));
+    }
     let mut count = 0;
     for y in 0..map.len() {
         for x in 0..map[0].len() {
-            if (y, x) == guard.position() {
+            // Skip those coordinates that are not in the guard's path
+            if !visited.contains(&(y, x)) {
                 continue;
             }
-            match map[y][x] {
-                Floor::Empty => {
-                    let mut map = map.clone();
-                    let mut guard = guard.clone();
-                    map[y][x] = Floor::Obstruction;
-                    let mut visited = HashSet::new();
-                    visited.insert((guard.position(), guard.direction()));
-                    while let Some(position) = guard.next(&map) {
-                        if visited.contains(&(position, guard.direction())) {
-                            count += 1;
-                            break;
-                        } else {
-                            visited.insert((position, guard.direction()));
-                        }
+            if map[y][x] == Floor::Empty {
+                let mut guard = guard.clone();
+                // Mutate (performance optimization compared to cloning the map)
+                map[y][x] = Floor::Obstruction;
+                let mut visited = HashSet::new();
+                visited.insert(guard.key());
+                while let Some(key) = guard.next(&map) {
+                    if visited.contains(&key) {
+                        count += 1;
+                        break;
                     }
+                    visited.insert(key);
                 }
-                Floor::Obstruction => {}
+                // Undo mutation
+                map[y][x] = Floor::Empty;
             }
         }
     }
