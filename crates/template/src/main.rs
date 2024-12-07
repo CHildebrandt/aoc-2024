@@ -14,6 +14,6 @@ fn part2(input: &str) -> usize {
 fn main() {
     test_part1(|| part1(TEST), 0);
     // answer_part1(|| part1(INPUT), 0);
-    // test_part2(|| part1(TEST), 0);
-    // answer_part2(|| part1(INPUT), 0);
+    // test_part2(|| part2(TEST), 0);
+    // answer_part2(|| part2(INPUT), 0);
 }
