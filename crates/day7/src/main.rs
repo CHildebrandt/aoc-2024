@@ -21,13 +21,19 @@ fn parse(input: &str) -> Vec<(usize, Vec<usize>)> {
         .collect::<Vec<_>>()
 }
 
+#[derive(Clone, Copy)]
 enum Op {
     Add,
     Mul,
+    Concat,
 }
 
 impl Op {
-    fn variants() -> &'static [Self] {
+    fn all_variants() -> &'static [Self] {
+        &[Self::Add, Self::Mul, Self::Concat]
+    }
+
+    fn variants_p1() -> &'static [Self] {
         &[Self::Add, Self::Mul]
     }
 
@@ -35,6 +41,7 @@ impl Op {
         match self {
             Self::Add => a + b,
             Self::Mul => a * b,
+            Self::Concat => format!("{}{}", a, b).parse::<usize>().unwrap(),
         }
     }
 }
@@ -49,18 +56,16 @@ struct Expr {
 }
 
 impl Expr {
-    fn all_variants_from(nums: &Vec<usize>) -> Vec<Self> {
+    fn all_variants_from(nums: &Vec<usize>, variants: &'static [Op]) -> Vec<Self> {
         let mut exprs = vec![];
-        for i in 0..Op::variants().len().pow(nums.len() as u32) {
+        for i in 0..variants.len().pow(nums.len() as u32) {
             let mut symbols = vec![];
             for (j, num) in nums.iter().enumerate() {
                 symbols.push(Symbol::Num(*num));
                 if j < nums.len() - 1 {
-                    let op = match Op::variants()[(i / Op::variants().len().pow(j as u32)) % 2] {
-                        Op::Add => Symbol::Op(Op::Add),
-                        Op::Mul => Symbol::Op(Op::Mul),
-                    };
-                    symbols.push(op);
+                    symbols.push(Symbol::Op(
+                        variants[(i / variants.len().pow(j as u32)) % variants.len()],
+                    ));
                 }
             }
             exprs.push(Self { symbols });
@@ -93,7 +98,7 @@ impl Expr {
 fn part1(input: &str) -> usize {
     let input = parse(input);
     input.iter().fold(0, |acc, (sum, nums)| {
-        if Expr::all_variants_from(nums)
+        if Expr::all_variants_from(nums, Op::variants_p1())
             .iter()
             .any(|expr| expr.eval() == *sum)
         {
@@ -105,12 +110,22 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    0
+    let input = parse(input);
+    input.iter().fold(0, |acc, (sum, nums)| {
+        if Expr::all_variants_from(nums, Op::all_variants())
+            .iter()
+            .any(|expr| expr.eval() == *sum)
+        {
+            acc + sum
+        } else {
+            acc
+        }
+    })
 }
 
 fn main() {
     test_part1(|| part1(TEST), 3749);
     answer_part1(|| part1(INPUT), 975671981569);
-    // test_part2(|| part1(TEST), 0);
-    // answer_part2(|| part1(INPUT), 0);
+    test_part2(|| part2(TEST), 11387);
+    answer_part2(|| part2(INPUT), 223472064194845);
 }
