@@ -1,3 +1,6 @@
+pub mod direction;
+pub mod grid;
+
 fn answer(get: impl FnOnce() -> usize, actual: usize, is_test: bool, part: u8) {
     let time = std::time::Instant::now();
     assert_eq!(get(), actual);
