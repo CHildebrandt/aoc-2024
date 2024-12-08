@@ -22,17 +22,13 @@ impl GridCell {
 
 fn part1(input: &str) -> usize {
     let grid = Grid::from_str(input, GridCell::from_char);
-    let grouped = grid.group_by_cell_value();
-    let pairs = grouped
+    grid.group_by_cell_value()
         .iter()
-        .filter(|(k, v)| *k != &GridCell::Empty && v.len() > 1)
-        .map(|(_, v)| v)
-        .collect::<Vec<_>>();
-    let anti_nodes = pairs
-        .iter()
-        .flat_map(|v| {
+        .filter_map(|(k, v)| (k != &GridCell::Empty && v.len() > 1).then_some(v))
+        .flat_map(|antenna_group| {
             grid.filter_positions_virtual(
-                &v.iter()
+                &antenna_group
+                    .iter()
                     .combinations(2)
                     .flat_map(|c| {
                         let (a, b) = grid.get_outer_diff_positions(*c[0], *c[1]);
@@ -42,31 +38,23 @@ fn part1(input: &str) -> usize {
             )
         })
         .unique()
-        .collect::<Vec<_>>();
-    anti_nodes.len()
+        .count()
 }
 
 fn part2(input: &str) -> usize {
     let grid = Grid::from_str(input, GridCell::from_char);
-    let grouped = grid.group_by_cell_value();
-    let pairs = grouped
+    grid.group_by_cell_value()
         .iter()
-        .filter(|(k, v)| *k != &GridCell::Empty && v.len() > 1)
-        .map(|(_, v)| v)
-        .collect::<Vec<_>>();
-    let anti_nodes = pairs
-        .iter()
-        .flat_map(|v| {
-            grid.filter_positions_virtual(
-                &v.iter()
-                    .combinations(2)
-                    .flat_map(|c| grid.get_outer_diff_positions_multi(*c[0], *c[1]))
-                    .collect::<Vec<_>>(),
-            )
+        .filter_map(|(k, v)| (k != &GridCell::Empty && v.len() > 1).then_some(v))
+        .flat_map(|antenna_group| {
+            antenna_group
+                .iter()
+                .combinations(2)
+                .flat_map(|c| grid.harmonics(*c[0], *c[1]))
+                .collect::<Vec<_>>()
         })
         .unique()
-        .collect::<Vec<_>>();
-    anti_nodes.len()
+        .count()
 }
 
 fn main() {

@@ -127,12 +127,7 @@ impl<T: Debug + Clone> Grid<T> {
         )
     }
 
-    // TODO: naming
-    pub fn get_outer_diff_positions_multi(
-        &self,
-        pos_a: Position,
-        pos_b: Position,
-    ) -> Vec<PositionVirtual> {
+    pub fn harmonics(&self, pos_a: Position, pos_b: Position) -> Vec<Position> {
         // TODO: return Err instead
         if !self.validate_position(pos_a) || !self.validate_position(pos_b) {
             panic!("Invalid positions!");
@@ -150,15 +145,16 @@ impl<T: Debug + Clone> Grid<T> {
         let mut a = (a_y + a_dy, a_x + a_dx);
         let mut b = (b_y + b_dy, b_x + b_dx);
         while self.validate_position_virtual(a) {
-            list.push(a);
+            list.push((a.0 as usize, a.1 as usize));
             a = (a.0 + a_dy, a.1 + a_dx);
         }
         while self.validate_position_virtual(b) {
-            list.push(b);
+            list.push((b.0 as usize, b.1 as usize));
             b = (b.0 + b_dy, b.1 + b_dx);
         }
-        list.push((a_y, a_x));
-        list.push((b_y, b_x));
+        // Not clear why we need to add the original positions?
+        list.push(pos_a);
+        list.push(pos_b);
         list
     }
 }
