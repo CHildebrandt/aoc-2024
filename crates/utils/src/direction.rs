@@ -72,3 +72,20 @@ impl Direction for OrdinalDirection {
         (dy, dx)
     }
 }
+
+impl OrdinalDirection {
+    pub fn from_diff(diff: PositionVirtual) -> Option<Self> {
+        match diff {
+            (0, 0) => None,
+            (0, x) if x > 0 => Some(Self::East),
+            (0, x) if x < 0 => Some(Self::West),
+            (y, 0) if y > 0 => Some(Self::South),
+            (y, 0) if y < 0 => Some(Self::North),
+            (y, x) if y > 0 && x > 0 => Some(Self::SouthEast),
+            (y, x) if y > 0 && x < 0 => Some(Self::SouthWest),
+            (y, x) if y < 0 && x > 0 => Some(Self::NorthEast),
+            (y, x) if y < 0 && x < 0 => Some(Self::NorthWest),
+            _ => None,
+        }
+    }
+}

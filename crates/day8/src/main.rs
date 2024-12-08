@@ -47,12 +47,31 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    0
+    let grid = Grid::from_str(input, GridCell::from_char);
+    let grouped = grid.group_by_cell_value();
+    let pairs = grouped
+        .iter()
+        .filter(|(k, v)| *k != &GridCell::Empty && v.len() > 1)
+        .map(|(_, v)| v)
+        .collect::<Vec<_>>();
+    let anti_nodes = pairs
+        .iter()
+        .flat_map(|v| {
+            grid.filter_positions_virtual(
+                &v.iter()
+                    .combinations(2)
+                    .flat_map(|c| grid.get_outer_diff_positions_multi(*c[0], *c[1]))
+                    .collect::<Vec<_>>(),
+            )
+        })
+        .unique()
+        .collect::<Vec<_>>();
+    anti_nodes.len()
 }
 
 fn main() {
     test_part1(|| part1(TEST), 14);
     answer_part1(|| part1(INPUT), 367);
-    // test_part2(|| part2(TEST), 0);
-    // answer_part2(|| part2(INPUT), 0);
+    test_part2(|| part2(TEST), 34);
+    answer_part2(|| part2(INPUT), 1285);
 }

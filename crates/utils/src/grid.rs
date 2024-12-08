@@ -126,6 +126,41 @@ impl<T: Debug + Clone> Grid<T> {
             (b_y + (b_y - a_y), b_x + (b_x - a_x)),
         )
     }
+
+    // TODO: naming
+    pub fn get_outer_diff_positions_multi(
+        &self,
+        pos_a: Position,
+        pos_b: Position,
+    ) -> Vec<PositionVirtual> {
+        // TODO: return Err instead
+        if !self.validate_position(pos_a) || !self.validate_position(pos_b) {
+            panic!("Invalid positions!");
+        }
+        assert_ne!(pos_a, pos_b, "Same positions for a and b!");
+        let mut list = vec![];
+        let a_y = pos_a.0 as isize;
+        let a_x = pos_a.1 as isize;
+        let b_y = pos_b.0 as isize;
+        let b_x = pos_b.1 as isize;
+        let a_dy = a_y - b_y;
+        let a_dx = a_x - b_x;
+        let b_dy = b_y - a_y;
+        let b_dx = b_x - a_x;
+        let mut a = (a_y + a_dy, a_x + a_dx);
+        let mut b = (b_y + b_dy, b_x + b_dx);
+        while self.validate_position_virtual(a) {
+            list.push(a);
+            a = (a.0 + a_dy, a.1 + a_dx);
+        }
+        while self.validate_position_virtual(b) {
+            list.push(b);
+            b = (b.0 + b_dy, b.1 + b_dx);
+        }
+        list.push((a_y, a_x));
+        list.push((b_y, b_x));
+        list
+    }
 }
 
 impl Grid<char> {
