@@ -5,26 +5,11 @@ use utils::*;
 const TEST: &str = include_str!("./input/test.txt");
 const INPUT: &str = include_str!("./input/input.txt");
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum GridCell {
-    Empty,
-    Antenna(char),
-}
-
-impl GridCell {
-    fn from_char(c: char) -> Self {
-        match c {
-            '.' => Self::Empty,
-            c => Self::Antenna(c),
-        }
-    }
-}
-
 fn part1(input: &str) -> usize {
-    let grid = Grid::from_str(input, GridCell::from_char);
+    let grid = Grid::char_grid(input);
     grid.group_by_cell_value()
         .iter()
-        .filter_map(|(k, v)| (k != &GridCell::Empty && v.len() > 1).then_some(v))
+        .filter_map(|(k, v)| (*k != '.' && v.len() > 1).then_some(v))
         .flat_map(|antenna_group| {
             grid.filter_positions_virtual(
                 &antenna_group
@@ -42,10 +27,10 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    let grid = Grid::from_str(input, GridCell::from_char);
+    let grid = Grid::char_grid(input);
     grid.group_by_cell_value()
         .iter()
-        .filter_map(|(k, v)| (k != &GridCell::Empty && v.len() > 1).then_some(v))
+        .filter_map(|(k, v)| (*k != '.' && v.len() > 1).then_some(v))
         .flat_map(|antenna_group| {
             antenna_group
                 .iter()
