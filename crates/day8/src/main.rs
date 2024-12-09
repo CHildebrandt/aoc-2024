@@ -34,9 +34,8 @@ fn part2(input: &str) -> usize {
         .flat_map(|antenna_group| {
             antenna_group
                 .iter()
-                .combinations(2)
-                .flat_map(|c| grid.harmonics(*c[0], *c[1]))
-                .collect::<Vec<_>>()
+                .tuple_combinations()
+                .flat_map(|(pos_a, pos_b)| grid.harmonics(*pos_a, *pos_b))
         })
         .unique()
         .count()
