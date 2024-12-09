@@ -79,13 +79,75 @@ fn part1(input: &str) -> usize {
         .fold(0, |acc, (i, val)| acc + i * val)
 }
 
+#[derive(Debug, Clone, PartialEq)]
+enum Item {
+    Empty,
+    MarkedEmpty,
+    Id(usize),
+}
+
 fn part2(input: &str) -> usize {
-    0
+    let nums = input
+        .chars()
+        .map(|c| c.to_digit(10).unwrap() as usize)
+        .collect::<Vec<_>>();
+    assert!(nums.len() % 2 == 1);
+    let mut items = vec![];
+    for (curr, next) in nums.iter().tuples() {
+        items.push(*curr);
+        items.push(*next);
+    }
+    items.push(*nums.last().unwrap());
+    items.push(0); // To make len even
+    let with_ids: Vec<DiskMapEntry> = items
+        .iter()
+        .tuples()
+        .enumerate()
+        .map(|(id, (used, free))| DiskMapEntry {
+            id,
+            used: *used,
+            free: *free,
+        })
+        .collect::<Vec<_>>();
+    let mut items = vec![];
+    for entry in &with_ids {
+        items.extend(vec![Item::Id(entry.id); entry.used]);
+        items.extend(vec![Item::Empty; entry.free]);
+    }
+    for entry in with_ids.iter().skip(1).rev() {
+        let index_of = items.iter().position(|x| *x == Item::Id(entry.id)).unwrap();
+        if entry.used > 0 {
+            if let Some(index) =
+                items
+                    .iter()
+                    .enumerate()
+                    .take(index_of - 1)
+                    .position(|(j, item)| match item {
+                        Item::Empty => {
+                            j + entry.used <= items.len()
+                                && items[j..j + entry.used].iter().all(|x| *x == Item::Empty)
+                        }
+                        _ => false,
+                    })
+            {
+                items[index..index + entry.used]
+                    .iter_mut()
+                    .for_each(|x| *x = Item::Id(entry.id));
+                items[index_of..index_of + entry.used]
+                    .iter_mut()
+                    .for_each(|x| *x = Item::MarkedEmpty);
+            }
+        }
+    }
+    items.iter().enumerate().fold(0, |acc, (i, val)| match val {
+        Item::Id(val) => acc + i * val,
+        _ => acc,
+    })
 }
 
 fn main() {
     test_part1(|| part1(TEST), 1928);
     answer_part1(|| part1(INPUT), 6349606724455);
-    // test_part2(|| part2(TEST), 0);
-    // answer_part2(|| part2(INPUT), 0);
+    test_part2(|| part2(TEST), 2858);
+    answer_part2(|| part2(INPUT), 6376648986651);
 }
