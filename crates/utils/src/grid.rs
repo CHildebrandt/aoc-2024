@@ -1,4 +1,4 @@
-use crate::direction::PositionVirtual;
+use crate::direction::{CardinalDirection, Direction, OrdinalDirection, PositionVirtual};
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
@@ -59,6 +59,26 @@ impl<T: Debug + Clone> Grid<T> {
         }
     }
 
+    pub fn get(&self, (y, x): Position) -> Option<&T> {
+        if y < self.height && x < self.width {
+            Some(&self.data[y * self.width + x])
+        } else {
+            None
+        }
+    }
+
+    pub fn get_positions_where(&self, f: impl Fn(&T) -> bool) -> Vec<Position> {
+        let mut positions = vec![];
+        for (y, row) in self.iter_rows().enumerate() {
+            for (x, cell) in row.iter().enumerate() {
+                if f(cell) {
+                    positions.push((y, x));
+                }
+            }
+        }
+        positions
+    }
+
     pub fn validate_position(&self, pos: Position) -> bool {
         let (y, x) = pos;
         y < self.height && x < self.width
@@ -105,6 +125,33 @@ impl<T: Debug + Clone> Grid<T> {
             }
         }
         groups
+    }
+
+    fn neighbors<D: 'static + Direction>(&self, (y, x): Position) -> Vec<Position> {
+        let mut neighbors = Vec::new();
+        for direction in D::all() {
+            let (dy, dx) = direction.dydx(1);
+            let y = y as isize + dy;
+            let x = x as isize + dx;
+            if self.validate_position_virtual((y, x)) {
+                neighbors.push((y as usize, x as usize));
+            }
+        }
+        neighbors
+    }
+
+    pub fn neighbors_cardinal(&self, (y, x): Position) -> Vec<Position> {
+        self.neighbors::<CardinalDirection>((y, x))
+    }
+
+    pub fn neighbors_ordinal(&self, (y, x): Position) -> Vec<Position> {
+        self.neighbors::<OrdinalDirection>((y, x))
+    }
+
+    pub fn distance_cardinal(&self, pos_a: Position, pos_b: Position) -> usize {
+        let (y1, x1) = pos_a;
+        let (y2, x2) = pos_b;
+        y1.abs_diff(y2) + x1.abs_diff(x2)
     }
 
     // TODO: naming
