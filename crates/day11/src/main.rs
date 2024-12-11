@@ -1,114 +1,53 @@
-use rayon::vec;
+use std::collections::HashMap;
+
 use utils::*;
 
 const TEST: &str = include_str!("./input/test.txt");
 const INPUT: &str = include_str!("./input/input.txt");
 
+fn calc_recursively(
+    stone_val: usize,
+    repeat: usize,
+    cache: &mut HashMap<(usize, usize), usize>,
+) -> usize {
+    if repeat == 0 {
+        return 1;
+    }
+    if let Some(&val) = cache.get(&(stone_val, repeat)) {
+        return val;
+    }
+    let res = if stone_val == 0 {
+        calc_recursively(1, repeat - 1, cache)
+    } else if (stone_val.ilog10() + 1) % 2 == 0 {
+        let s = stone_val.to_string();
+        let (a, b) = s.split_at(s.len() / 2);
+        calc_recursively(a.parse().unwrap(), repeat - 1, cache)
+            + calc_recursively(b.parse().unwrap(), repeat - 1, cache)
+    } else {
+        calc_recursively(stone_val * 2024, repeat - 1, cache)
+    };
+    cache.insert((stone_val, repeat), res);
+    res
+}
+
 fn part1(input: &str) -> usize {
-    // let mut input = input
-    //     .split_whitespace()
-    //     .map(|x| vec![x.parse::<usize>().unwrap()])
-    //     .collect::<Vec<_>>();
-    // for _ in 0..25 {
-    //     for stones in input.iter_mut() {
-    //         let mut new_stones = vec![];
-    //         for stone in stones.iter() {
-    //             let (a, b) = if *stone == 0 {
-    //                 (1, None)
-    //             } else if (stone.ilog10() + 1) % 2 == 0 {
-    //                 let s = stone.to_string();
-    //                 let (a, b) = s.split_at(s.len() / 2);
-    //                 (
-    //                     a.parse::<usize>().unwrap(),
-    //                     Some(b.parse::<usize>().unwrap()),
-    //                 )
-    //             } else {
-    //                 (stone * 2024, None)
-    //             };
-    //             new_stones.push(a);
-    //             if let Some(b) = b {
-    //                 new_stones.push(b);
-    //             }
-    //         }
-    //         *stones = new_stones;
-    //     }
-    // }
-    // input.iter().flatten().collect::<Vec<_>>().len()
-    let mut input = input
+    let mut cache = HashMap::new();
+    input
         .split_whitespace()
-        .map(StoneList::from_str)
-        .collect::<Vec<_>>();
-    input.iter_mut().fold(0, |acc, x| acc + x.blink_n(25))
-}
-
-struct StoneList {
-    inner: Vec<usize>,
-}
-
-impl StoneList {
-    fn from_str(input: &str) -> Self {
-        Self {
-            inner: vec![input.parse::<usize>().unwrap()],
-        }
-    }
-
-    fn blink_n(&mut self, n: usize) -> usize {
-        let mut len = self.inner.len();
-        for _ in 0..n {
-            for _ in 0..len {
-                let curr = self.inner.remove(0);
-                if curr == 0 {
-                    self.inner.push(1);
-                } else if (curr.ilog10() + 1) % 2 == 0 {
-                    let s = curr.to_string();
-                    let (a, b) = s.split_at(s.len() / 2);
-                    self.inner.push(a.parse::<usize>().unwrap());
-                    self.inner.push(b.parse::<usize>().unwrap());
-                    len += 1;
-                } else {
-                    self.inner.push(curr * 2024);
-                };
-            }
-        }
-        len
-    }
+        .map(|x| calc_recursively(x.parse().unwrap(), 25, &mut cache))
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
-    let mut input = input
+    let mut cache = HashMap::new();
+    input
         .split_whitespace()
-        .map(|x| vec![x.parse::<usize>().unwrap()])
-        .collect::<Vec<_>>();
-    for _ in 0..75 {
-        for stones in input.iter_mut() {
-            let mut new_stones = vec![];
-            for stone in stones.iter() {
-                let (a, b) = if *stone == 0 {
-                    (1, None)
-                } else if (stone.ilog10() + 1) % 2 == 0 {
-                    let s = stone.to_string();
-                    let (a, b) = s.split_at(s.len() / 2);
-                    (
-                        a.parse::<usize>().unwrap(),
-                        Some(b.parse::<usize>().unwrap()),
-                    )
-                } else {
-                    (stone * 2024, None)
-                };
-                new_stones.push(a);
-                if let Some(b) = b {
-                    new_stones.push(b);
-                }
-            }
-            *stones = new_stones;
-        }
-    }
-    input.iter().flatten().collect::<Vec<_>>().len()
+        .map(|x| calc_recursively(x.parse().unwrap(), 75, &mut cache))
+        .sum()
 }
 
 fn main() {
     test_part1(|| part1(TEST), 55312);
     answer_part1(|| part1(INPUT), 199946);
-    // test_part2(|| part2(TEST), 55312);
-    // answer_part2(|| part2(INPUT), 0);
+    answer_part2(|| part2(INPUT), 237994815702032);
 }
