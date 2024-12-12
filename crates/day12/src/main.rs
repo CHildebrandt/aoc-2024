@@ -35,8 +35,7 @@ fn part2(input: &str) -> usize {
         let area_set = area.iter().map(|(pos, _)| *pos).collect::<HashSet<_>>();
         for (pos, _) in area {
             for direction in CardinalDirection::all() {
-                let diff = direction.dydx(1);
-                let diffed = (pos.0 as isize + diff.0, pos.1 as isize + diff.1);
+                let diffed = direction.add_unsigned(pos, 1);
                 if !grid.validate_position_virtual(diffed)
                     || !area_set.contains(&(diffed.0 as usize, diffed.1 as usize))
                 {
@@ -45,22 +44,17 @@ fn part2(input: &str) -> usize {
             }
         }
         let mut num_continuous_fence_positions = fence_positions.len();
-        let mut visited = HashSet::new();
         for (direction, pos) in fence_positions.iter() {
             for (other_direction, other_pos) in fence_positions.iter() {
                 if direction == other_direction {
                     match direction {
                         CardinalDirection::North | CardinalDirection::South => {
                             if pos.0 == other_pos.0 && pos.1 + 1 == other_pos.1 {
-                                visited.insert((direction, *pos));
-                                visited.insert((direction, *other_pos));
                                 num_continuous_fence_positions -= 1;
                             }
                         }
                         CardinalDirection::East | CardinalDirection::West => {
                             if pos.1 == other_pos.1 && pos.0 + 1 == other_pos.0 {
-                                visited.insert((direction, *pos));
-                                visited.insert((direction, *other_pos));
                                 num_continuous_fence_positions -= 1;
                             }
                         }

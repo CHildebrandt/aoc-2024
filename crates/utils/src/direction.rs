@@ -5,6 +5,16 @@ pub type PositionVirtual = (isize, isize);
 pub trait Direction: Sized {
     fn dydx(&self, distance: usize) -> PositionVirtual;
     fn all() -> &'static [Self];
+
+    fn add(&self, pos: &PositionVirtual, distance: usize) -> PositionVirtual {
+        let (dy, dx) = self.dydx(distance);
+        (pos.0 + dy, pos.1 + dx)
+    }
+
+    fn add_unsigned(&self, pos: &(usize, usize), distance: usize) -> PositionVirtual {
+        let (dy, dx) = self.dydx(distance);
+        (pos.0 as isize + dy, pos.1 as isize + dx)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
