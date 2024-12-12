@@ -67,12 +67,31 @@ impl<T: Debug + Clone> Grid<T> {
         }
     }
 
+    pub fn get_virtual(&self, pos: PositionVirtual) -> Option<&T> {
+        if self.validate_position_virtual(pos) {
+            Some(&self.data[pos.0 as usize * self.width + pos.1 as usize])
+        } else {
+            None
+        }
+    }
+
     pub fn width(&self) -> usize {
         self.width
     }
 
     pub fn height(&self) -> usize {
         self.height
+    }
+
+    pub fn is_corner(&self, (y, x): Position) -> bool {
+        (y == 0 && x == 0)
+            || (y == 0 && x == self.width - 1)
+            || (y == self.height - 1 && x == 0)
+            || (y == self.height - 1 && x == self.width - 1)
+    }
+
+    pub fn is_edge(&self, (y, x): Position) -> bool {
+        y == 0 || x == 0 || y == self.height - 1 || x == self.width - 1
     }
 
     pub fn get_positions_where(&self, f: impl Fn(&T) -> bool) -> Vec<Position> {
@@ -121,6 +140,18 @@ impl<T: Debug + Clone> Grid<T> {
         }
     }
 
+    pub fn get_col(&self, x: usize) -> Option<Vec<T>> {
+        if x < self.width {
+            Some(
+                (0..self.height)
+                    .map(|y| self.data[y * self.width + x].clone())
+                    .collect(),
+            )
+        } else {
+            None
+        }
+    }
+
     pub fn iter_rows(&self) -> RowIter<'_, T> {
         RowIter::new(self)
     }
@@ -154,6 +185,30 @@ impl<T: Debug + Clone> Grid<T> {
 
     pub fn neighbors_ordinal(&self, (y, x): Position) -> Vec<Position> {
         self.neighbors::<OrdinalDirection>((y, x))
+    }
+
+    fn neighbors_virtual<D: 'static + Direction>(
+        &self,
+        pos: PositionVirtual,
+    ) -> Vec<PositionVirtual> {
+        let mut neighbors = Vec::new();
+        for direction in D::all() {
+            let (dy, dx) = direction.dydx(1);
+            let y = pos.0 + dy;
+            let x = pos.1 + dx;
+            if self.validate_position_virtual((y, x)) {
+                neighbors.push((y, x));
+            }
+        }
+        neighbors
+    }
+
+    pub fn neighbors_cardinal_virtual(&self, pos: PositionVirtual) -> Vec<PositionVirtual> {
+        self.neighbors_virtual::<CardinalDirection>(pos)
+    }
+
+    pub fn neighbors_ordinal_virtual(&self, pos: PositionVirtual) -> Vec<PositionVirtual> {
+        self.neighbors_virtual::<OrdinalDirection>(pos)
     }
 
     pub fn distance_cardinal(&self, pos_a: Position, pos_b: Position) -> usize {
@@ -291,41 +346,23 @@ impl<'a, T: Debug + Clone> Iterator for RowIter<'a, T> {
     }
 }
 
-// pub struct GridArea<'a, T: Debug + Clone> {
-//     grid: &'a Grid<T>,
-//     inner: Vec<(Position, &'a T)>,
-// }
+pub struct ColIter<'a, T: Debug + Clone> {
+    grid: &'a Grid<T>,
+    i: usize,
+}
 
-// impl<'a, T: Debug + Clone> GridArea<'a, T> {
-//     pub fn new(grid: &'a Grid<T>) -> Self {
-//         let mut areas = vec![];
-//         let mut visited = vec![vec![false; grid.width]; grid.height];
-//         for (y, row) in grid.iter_rows().enumerate() {
-//             for (x, _) in row.iter().enumerate() {
-//                 if visited[y][x] {
-//                     continue;
-//                 }
-//                 let mut area = vec![];
-//                 let mut stack = vec![(y, x)];
-//                 while let Some((y, x)) = stack.pop() {
-//                     if visited[y][x] {
-//                         continue;
-//                     }
-//                     visited[y][x] = true;
-//                     let cell = &grid.data[y * grid.width + x];
-//                     area.push(((y, x), cell));
-//                     for neighbor in grid.neighbors_cardinal((y, x)) {
-//                         let (ny, nx) = neighbor;
-//                         if !visited[ny][nx]
-//                             && is_part_of_same_area(cell, &grid.data[ny * grid.width + nx])
-//                         {
-//                             stack.push(neighbor);
-//                         }
-//                     }
-//                 }
-//                 areas.push(area);
-//             }
-//         }
-//         Self { grid, inner: areas }
-//     }
-// }
+impl<'a, T: Debug + Clone> ColIter<'a, T> {
+    pub fn new(grid: &'a Grid<T>) -> Self {
+        Self { grid, i: 0 }
+    }
+}
+
+impl<'a, T: Debug + Clone> Iterator for ColIter<'a, T> {
+    type Item = Vec<T>; // TODO: &[T]
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.grid.get_col(self.i);
+        self.i += 1;
+        next
+    }
+}
