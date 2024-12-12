@@ -204,6 +204,41 @@ impl<T: Debug + Clone> Grid<T> {
         list.push(pos_b);
         list
     }
+
+    pub fn areas<F: Fn(&T, &T) -> bool>(
+        &self,
+        is_part_of_same_area: F,
+    ) -> Vec<Vec<(Position, &T)>> {
+        let mut areas = vec![];
+        let mut visited = vec![vec![false; self.width]; self.height];
+        for (y, row) in self.iter_rows().enumerate() {
+            for (x, _) in row.iter().enumerate() {
+                if visited[y][x] {
+                    continue;
+                }
+                let mut area = vec![];
+                let mut stack = vec![(y, x)];
+                while let Some((y, x)) = stack.pop() {
+                    if visited[y][x] {
+                        continue;
+                    }
+                    visited[y][x] = true;
+                    let cell = &self.data[y * self.width + x];
+                    area.push(((y, x), cell));
+                    for neighbor in self.neighbors_cardinal((y, x)) {
+                        let (ny, nx) = neighbor;
+                        if !visited[ny][nx]
+                            && is_part_of_same_area(cell, &self.data[ny * self.width + nx])
+                        {
+                            stack.push(neighbor);
+                        }
+                    }
+                }
+                areas.push(area);
+            }
+        }
+        areas
+    }
 }
 
 impl Grid<char> {
@@ -247,3 +282,42 @@ impl<'a, T: Debug + Clone> Iterator for RowIter<'a, T> {
         next
     }
 }
+
+// pub struct GridArea<'a, T: Debug + Clone> {
+//     grid: &'a Grid<T>,
+//     inner: Vec<(Position, &'a T)>,
+// }
+
+// impl<'a, T: Debug + Clone> GridArea<'a, T> {
+//     pub fn new(grid: &'a Grid<T>) -> Self {
+//         let mut areas = vec![];
+//         let mut visited = vec![vec![false; grid.width]; grid.height];
+//         for (y, row) in grid.iter_rows().enumerate() {
+//             for (x, _) in row.iter().enumerate() {
+//                 if visited[y][x] {
+//                     continue;
+//                 }
+//                 let mut area = vec![];
+//                 let mut stack = vec![(y, x)];
+//                 while let Some((y, x)) = stack.pop() {
+//                     if visited[y][x] {
+//                         continue;
+//                     }
+//                     visited[y][x] = true;
+//                     let cell = &grid.data[y * grid.width + x];
+//                     area.push(((y, x), cell));
+//                     for neighbor in grid.neighbors_cardinal((y, x)) {
+//                         let (ny, nx) = neighbor;
+//                         if !visited[ny][nx]
+//                             && is_part_of_same_area(cell, &grid.data[ny * grid.width + nx])
+//                         {
+//                             stack.push(neighbor);
+//                         }
+//                     }
+//                 }
+//                 areas.push(area);
+//             }
+//         }
+//         Self { grid, inner: areas }
+//     }
+// }
