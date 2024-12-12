@@ -67,6 +67,14 @@ impl<T: Debug + Clone> Grid<T> {
         }
     }
 
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
     pub fn get_positions_where(&self, f: impl Fn(&T) -> bool) -> Vec<Position> {
         let mut positions = vec![];
         for (y, row) in self.iter_rows().enumerate() {
