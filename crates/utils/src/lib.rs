@@ -1,6 +1,6 @@
 pub mod direction;
 pub mod grid;
-pub mod grid2;
+// pub mod grid2;
 
 pub fn split_double_newline(input: &str) -> Vec<&str> {
     let re = regex::Regex::new(r"\r?\n\r?\n").unwrap();
