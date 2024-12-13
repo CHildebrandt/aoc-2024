@@ -26,7 +26,7 @@ impl<T: Debug + Clone> Display for Grid<T> {
 
 impl<T: Debug + Clone> Grid<T> {
     pub fn from_str(input: &str, f: impl Fn(char) -> T) -> Self {
-        let mut data = vec![];
+        let mut data = Vec::with_capacity(input.len());
         let mut height = 0;
         let mut width = 0;
         for (y, line) in input.lines().enumerate() {

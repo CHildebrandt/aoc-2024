@@ -1,5 +1,11 @@
 pub mod direction;
 pub mod grid;
+pub mod grid2;
+
+pub fn split_double_newline(input: &str) -> Vec<&str> {
+    let re = regex::Regex::new(r"\r?\n\r?\n").unwrap();
+    re.split(input).collect()
+}
 
 fn answer(get: impl FnOnce() -> usize, actual: usize, is_test: bool, part: u8) {
     let time = std::time::Instant::now();
