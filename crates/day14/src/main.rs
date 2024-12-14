@@ -84,37 +84,18 @@ fn part1(input: &str, width: usize, height: usize) -> usize {
     let mid_x = max_x / 2;
     let mut mapped = HashMap::<Quadrant, Vec<Robot>>::new();
     for robot in robots {
-        if robot.pos.0 == mid_y || robot.pos.1 == mid_x {
-            if let Some(group) = mapped.get_mut(&Quadrant::None) {
-                group.push(robot);
-            } else {
-                mapped.insert(Quadrant::None, vec![robot]);
-            }
+        let quadrant = if robot.pos.0 == mid_y || robot.pos.1 == mid_x {
+            Quadrant::None
         } else if robot.pos.0 < mid_y && robot.pos.1 < mid_x {
-            if let Some(group) = mapped.get_mut(&Quadrant::TopLeft) {
-                group.push(robot);
-            } else {
-                mapped.insert(Quadrant::TopLeft, vec![robot]);
-            }
+            Quadrant::TopLeft
         } else if robot.pos.0 < mid_y && robot.pos.1 > mid_x {
-            if let Some(group) = mapped.get_mut(&Quadrant::TopRight) {
-                group.push(robot);
-            } else {
-                mapped.insert(Quadrant::TopRight, vec![robot]);
-            }
+            Quadrant::TopRight
         } else if robot.pos.0 > mid_y && robot.pos.1 < mid_x {
-            if let Some(group) = mapped.get_mut(&Quadrant::BottomLeft) {
-                group.push(robot);
-            } else {
-                mapped.insert(Quadrant::BottomLeft, vec![robot]);
-            }
+            Quadrant::BottomLeft
         } else {
-            if let Some(group) = mapped.get_mut(&Quadrant::BottomRight) {
-                group.push(robot);
-            } else {
-                mapped.insert(Quadrant::BottomRight, vec![robot]);
-            }
-        }
+            Quadrant::BottomRight
+        };
+        mapped.entry(quadrant).or_insert_with(Vec::new).push(robot);
     }
     mapped.iter().fold(0, |factor, (quadrant, group)| {
         if quadrant == &Quadrant::None {
@@ -133,14 +114,17 @@ fn part2(input: &str) -> usize {
     for sec in 1..100_000 {
         robots.iter_mut().for_each(|robot| robot.next_pos(&grid));
         let pos_set = robots.iter().map(|robot| robot.pos).collect::<HashSet<_>>();
+        let mut checked = HashSet::new();
         let neighboring = robots.iter().fold(0, |acc, robot| {
+            checked.insert(robot.pos);
             acc + grid
                 .neighbors_ordinal(robot.pos)
                 .iter()
-                .filter(|pos| pos_set.contains(pos))
+                .filter(|pos| !checked.contains(pos) && pos_set.contains(pos))
                 .count()
         });
-        if neighboring > robots.len() * 3 {
+        let neighboring = neighboring / 2;
+        if neighboring > robots.len() / 2 {
             return sec;
         }
     }
