@@ -83,6 +83,18 @@ impl<T: Debug + Clone> Grid<T> {
         self.height
     }
 
+    pub fn size(&self) -> (usize, usize) {
+        (self.height, self.width)
+    }
+
+    pub fn sub_grid(&self, height: usize, width: usize) -> SubGrid<T> {
+        SubGrid {
+            grid: self,
+            height,
+            width,
+        }
+    }
+
     pub fn is_corner(&self, (y, x): Position) -> bool {
         (y == 0 && x == 0)
             || (y == 0 && x == self.width - 1)
@@ -365,4 +377,10 @@ impl<'a, T: Debug + Clone> Iterator for ColIter<'a, T> {
         self.i += 1;
         next
     }
+}
+
+pub struct SubGrid<'a, T: Debug + Clone> {
+    grid: &'a Grid<T>,
+    height: usize,
+    width: usize,
 }
