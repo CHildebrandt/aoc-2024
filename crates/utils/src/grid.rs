@@ -12,11 +12,11 @@ pub struct Grid<T: Debug + Clone> {
     width: usize,
 }
 
-impl<T: Debug + Clone> Display for Grid<T> {
+impl<T: Debug + Clone + Display> Display for Grid<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in self.iter_rows() {
             for cell in row {
-                write!(f, "{:?}", cell)?;
+                write!(f, "{}", cell)?;
             }
             writeln!(f)?;
         }
@@ -166,6 +166,78 @@ impl<T: Debug + Clone> Grid<T> {
 
     pub fn iter_rows(&self) -> RowIter<'_, T> {
         RowIter::new(self)
+    }
+
+    pub fn find(&self, f: impl Fn(&T) -> bool) -> Option<Position> {
+        for (y, row) in self.iter_rows().enumerate() {
+            for (x, cell) in row.iter().enumerate() {
+                if f(cell) {
+                    return Some((y, x));
+                }
+            }
+        }
+        None
+    }
+
+    pub fn find_many(&self, f: impl Fn(&T) -> bool) -> Vec<Position> {
+        let mut positions = vec![];
+        for (y, row) in self.iter_rows().enumerate() {
+            for (x, cell) in row.iter().enumerate() {
+                if f(cell) {
+                    positions.push((y, x));
+                }
+            }
+        }
+        positions
+    }
+
+    pub fn try_move_direction(
+        &self,
+        pos: &Position,
+        direction: &CardinalDirection,
+    ) -> Option<Position> {
+        let new_pos = direction.add_unsigned(pos, 1);
+        if self.validate_position_virtual(new_pos) {
+            Some((new_pos.0 as usize, new_pos.1 as usize))
+        } else {
+            None
+        }
+    }
+
+    pub fn move_if(
+        &self,
+        pos: &Position,
+        direction: &CardinalDirection,
+        f: impl Fn(&T) -> bool,
+    ) -> Option<Position> {
+        let new_pos = direction.add_unsigned(pos, 1);
+        if self.validate_position_virtual(new_pos)
+            && f(self.get((new_pos.0 as usize, new_pos.1 as usize)).unwrap())
+        {
+            Some((new_pos.0 as usize, new_pos.1 as usize))
+        } else {
+            None
+        }
+    }
+
+    pub fn replace(&mut self, pos: &Position, value: T) {
+        if self.validate_position(*pos) {
+            self.data[pos.0 * self.width + pos.1] = value;
+        }
+    }
+
+    pub fn replace_all_where(&mut self, f: impl Fn(&T) -> bool, value: T) {
+        for cell in &mut self.data {
+            if f(cell) {
+                *cell = value.clone();
+            }
+        }
+    }
+
+    pub fn move_item(&mut self, from: Position, to: Position) {
+        let item = self.get(from).unwrap().clone();
+        self.replace(&from, self.get(to).unwrap().clone());
+        self.replace(&to, item);
     }
 
     pub fn group_by<K: Eq + Hash, F: Fn(&T) -> K>(&self, f: F) -> HashMap<K, Vec<(Position, &T)>> {

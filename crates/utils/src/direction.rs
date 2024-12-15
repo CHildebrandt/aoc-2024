@@ -41,6 +41,18 @@ impl Direction for CardinalDirection {
     }
 }
 
+impl std::fmt::Display for CardinalDirection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let x = match self {
+            Self::North => "N",
+            Self::South => "S",
+            Self::East => "E",
+            Self::West => "W",
+        };
+        write!(f, "{}", x)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OrdinalDirection {
     North,
