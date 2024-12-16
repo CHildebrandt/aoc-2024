@@ -41,6 +41,46 @@ impl Direction for CardinalDirection {
     }
 }
 
+impl CardinalDirection {
+    pub fn from_diff(diff: PositionVirtual) -> Option<Self> {
+        match diff {
+            (0, 0) => None,
+            (0, x) if x > 0 => Some(Self::East),
+            (0, x) if x < 0 => Some(Self::West),
+            (y, 0) if y > 0 => Some(Self::South),
+            (y, 0) if y < 0 => Some(Self::North),
+            _ => None,
+        }
+    }
+
+    pub fn is_180(&self, other: &Self) -> bool {
+        match self {
+            Self::North => other == &Self::South,
+            Self::South => other == &Self::North,
+            Self::East => other == &Self::West,
+            Self::West => other == &Self::East,
+        }
+    }
+
+    pub fn is_90cw(&self, other: &Self) -> bool {
+        match self {
+            Self::North => other == &Self::East,
+            Self::South => other == &Self::West,
+            Self::East => other == &Self::South,
+            Self::West => other == &Self::North,
+        }
+    }
+
+    pub fn is_90ccw(&self, other: &Self) -> bool {
+        match self {
+            Self::North => other == &Self::West,
+            Self::South => other == &Self::East,
+            Self::East => other == &Self::North,
+            Self::West => other == &Self::South,
+        }
+    }
+}
+
 impl std::fmt::Display for CardinalDirection {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let x = match self {
@@ -110,4 +150,9 @@ impl OrdinalDirection {
             _ => None,
         }
     }
+}
+
+enum CardinalRotation {
+    Clockwise,
+    CounterClockwise,
 }
