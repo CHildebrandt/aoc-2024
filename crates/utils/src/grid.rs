@@ -2,6 +2,7 @@ use crate::direction::{CardinalDirection, Direction, OrdinalDirection, PositionV
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
+use std::ops::{Index, IndexMut};
 
 pub type Position = (usize, usize);
 
@@ -21,6 +22,20 @@ impl<T: Debug + Clone + Display> Display for Grid<T> {
             writeln!(f)?;
         }
         Ok(())
+    }
+}
+
+impl<T: Debug + Clone> Index<Position> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, index: Position) -> &Self::Output {
+        &self.data[index.0 * self.width + index.1]
+    }
+}
+
+impl<T: Debug + Clone> IndexMut<Position> for Grid<T> {
+    fn index_mut(&mut self, index: Position) -> &mut Self::Output {
+        &mut self.data[index.0 * self.width + index.1]
     }
 }
 

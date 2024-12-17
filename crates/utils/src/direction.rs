@@ -151,8 +151,3 @@ impl OrdinalDirection {
         }
     }
 }
-
-enum CardinalRotation {
-    Clockwise,
-    CounterClockwise,
-}
