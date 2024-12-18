@@ -4,6 +4,7 @@ use crate::direction::{CardinalDirection, Direction, OrdinalDirection, PositionV
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
+use std::marker::PhantomData;
 use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 
 pub type Position = (usize, usize);
@@ -281,6 +282,10 @@ impl<T: Debug + Clone> Grid<T> {
         groups
     }
 
+    fn neighbor_iter<'a, D: Direction>(&self, pos: &'a Position) -> NeighborIter<'_, 'a, T, D> {
+        NeighborIter::new(self, pos)
+    }
+
     fn neighbors<D: 'static + Direction>(&self, (y, x): Position) -> Vec<Position> {
         let mut neighbors = Vec::new();
         for direction in D::all() {
@@ -482,6 +487,39 @@ impl<'a, T: Debug + Clone> Iterator for ColIter<'a, T> {
     }
 }
 
+pub struct NeighborIter<'a, 'b, T: Debug + Clone, D: Direction> {
+    grid: &'a Grid<T>,
+    pos: &'b Position,
+    i: usize,
+    __direction: PhantomData<D>,
+}
+
+impl<'a, 'b, T: Debug + Clone, D: Direction> NeighborIter<'a, 'b, T, D> {
+    pub fn new(grid: &'a Grid<T>, pos: &'b Position) -> Self {
+        Self {
+            grid,
+            pos,
+            i: 0,
+            __direction: PhantomData,
+        }
+    }
+}
+
+impl<'a, 'b, T: Debug + Clone, D: Direction + 'static> Iterator for NeighborIter<'a, 'b, T, D> {
+    type Item = (Position, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some(dir) = D::all().get(self.i) {
+            self.i += 1;
+            let pos = dir.add_unsigned(self.pos, 1);
+            if let Some(t) = self.grid.get_virtual(pos) {
+                return Some(((pos.0 as usize, pos.1 as usize), t));
+            }
+        }
+        None
+    }
+}
+
 pub struct SubGrid<'a, T: Debug + Clone> {
     grid: &'a Grid<T>,
     height: usize,
@@ -609,5 +647,59 @@ impl<I: Integer> From<GridPos<I>> for (I, I) {
 impl<I: Integer + Copy> From<&GridPos<I>> for (I, I) {
     fn from(pos: &GridPos<I>) -> Self {
         (pos.0, pos.1)
+    }
+}
+
+pub trait Obstructs {
+    fn obstructs(&self) -> bool;
+}
+
+impl<T: Debug + Clone + Obstructs> Grid<T> {
+    pub fn obstructed_positions(&self) -> Vec<Position> {
+        self.get_positions_where(|cell| cell.obstructs())
+    }
+
+    pub fn unobstructed_positions(&self) -> Vec<Position> {
+        self.get_positions_where(|cell| !cell.obstructs())
+    }
+
+    pub fn neighbor_iter_unobstructed<'a, D: Direction + 'static>(
+        &'a self,
+        pos: &'a Position,
+    ) -> impl Iterator<Item = (Position, &T)> + 'a {
+        self.neighbor_iter::<D>(pos).filter(|(_, t)| !t.obstructs())
+    }
+
+    pub fn astar<D: Direction + 'static>(
+        &self,
+        start: &Position,
+        end: &Position,
+    ) -> Option<(Vec<Position>, usize)> {
+        pathfinding::prelude::astar(
+            start,
+            |pos| {
+                self.neighbor_iter_unobstructed::<D>(pos)
+                    .map(|(n, _)| (n, 1))
+                    .collect::<Vec<_>>()
+            },
+            |pos| self.distance_cardinal(*pos, *end),
+            |pos| pos == end,
+        )
+    }
+
+    pub fn astar_cardinal(
+        &self,
+        start: &Position,
+        end: &Position,
+    ) -> Option<(Vec<Position>, usize)> {
+        self.astar::<CardinalDirection>(start, end)
+    }
+
+    pub fn astar_ordinal(
+        &self,
+        start: &Position,
+        end: &Position,
+    ) -> Option<(Vec<Position>, usize)> {
+        self.astar::<OrdinalDirection>(start, end)
     }
 }
