@@ -511,6 +511,13 @@ impl<I: Integer + Copy> GridPos<I> {
     }
 }
 
+impl<I: Integer + Clone> Clone for GridPos<I> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone(), self.1.clone())
+    }
+}
+impl<I: Integer + Copy> Copy for GridPos<I> {}
+
 impl<I: Integer + Signed + Copy> GridPos<I> {
     pub fn try_unsign<U: Integer + Unsigned + std::convert::From<I>>(&self) -> Option<GridPos<U>> {
         if self.0.is_negative() || self.1.is_negative() {
