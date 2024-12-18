@@ -125,6 +125,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "day18"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "pathfinding",
+ "rayon",
+ "utils",
+]
+
+[[package]]
 name = "day2"
 version = "0.1.0"
 

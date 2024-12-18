@@ -1,8 +1,10 @@
+use num::{Integer, Signed, Unsigned};
+
 use crate::direction::{CardinalDirection, Direction, OrdinalDirection, PositionVirtual};
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
-use std::ops::{Index, IndexMut};
+use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
 
 pub type Position = (usize, usize);
 
@@ -36,6 +38,20 @@ impl<T: Debug + Clone> Index<Position> for Grid<T> {
 impl<T: Debug + Clone> IndexMut<Position> for Grid<T> {
     fn index_mut(&mut self, index: Position) -> &mut Self::Output {
         &mut self.data[index.0 * self.width + index.1]
+    }
+}
+
+impl<T: Debug + Clone> Index<PositionVirtual> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, index: PositionVirtual) -> &Self::Output {
+        &self.data[index.0 as usize * self.width + index.1 as usize]
+    }
+}
+
+impl<T: Debug + Clone> IndexMut<PositionVirtual> for Grid<T> {
+    fn index_mut(&mut self, index: PositionVirtual) -> &mut Self::Output {
+        &mut self.data[index.0 as usize * self.width + index.1 as usize]
     }
 }
 
@@ -470,4 +486,121 @@ pub struct SubGrid<'a, T: Debug + Clone> {
     grid: &'a Grid<T>,
     height: usize,
     width: usize,
+}
+
+pub struct GridPos<I: Integer>(pub I, pub I);
+
+impl<I: Integer> GridPos<I> {
+    pub fn new(y: I, x: I) -> Self {
+        Self(y, x)
+    }
+}
+
+impl<I: Integer + std::str::FromStr> GridPos<I> {
+    pub fn from_str(input: &str) -> Result<Self, I::Err> {
+        let mut parts = input.split(',');
+        let y = parts.next().unwrap().parse()?;
+        let x = parts.next().unwrap().parse()?;
+        Ok(Self(y, x))
+    }
+}
+
+impl<I: Integer + Copy> GridPos<I> {
+    pub fn flip(&self) -> Self {
+        Self(self.1, self.0)
+    }
+}
+
+impl<I: Integer + Signed + Copy> GridPos<I> {
+    pub fn try_unsign<U: Integer + Unsigned + std::convert::From<I>>(&self) -> Option<GridPos<U>> {
+        if self.0.is_negative() || self.1.is_negative() {
+            None
+        } else {
+            Some(GridPos(self.0.into(), self.1.into()))
+        }
+    }
+}
+
+impl<T: Debug + Clone> Index<GridPos<usize>> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, index: GridPos<usize>) -> &Self::Output {
+        &self.data[index.0 * self.height + index.1]
+    }
+}
+
+impl<T: Debug + Clone> IndexMut<GridPos<usize>> for Grid<T> {
+    fn index_mut(&mut self, index: GridPos<usize>) -> &mut Self::Output {
+        &mut self.data[index.0 * self.height + index.1]
+    }
+}
+
+impl<T: Debug + Clone> Index<&GridPos<usize>> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, index: &GridPos<usize>) -> &Self::Output {
+        &self.data[index.0 * self.height + index.1]
+    }
+}
+
+impl<T: Debug + Clone> IndexMut<&GridPos<usize>> for Grid<T> {
+    fn index_mut(&mut self, index: &GridPos<usize>) -> &mut Self::Output {
+        &mut self.data[index.0 * self.height + index.1]
+    }
+}
+
+impl<I: Integer> Add for GridPos<I> {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self(self.0 + other.0, self.1 + other.1)
+    }
+}
+
+impl<I: Integer> Sub for GridPos<I> {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self(self.0 - other.0, self.1 - other.1)
+    }
+}
+
+impl<I: Integer> Mul for GridPos<I> {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        Self(self.0 * other.0, self.1 * other.1)
+    }
+}
+
+impl<I: Integer> Div for GridPos<I> {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        Self(self.0 / other.0, self.1 / other.1)
+    }
+}
+
+impl<I: Integer> From<(I, I)> for GridPos<I> {
+    fn from(pos: (I, I)) -> Self {
+        Self(pos.0, pos.1)
+    }
+}
+
+impl<I: Integer + Copy> From<&(I, I)> for GridPos<I> {
+    fn from(pos: &(I, I)) -> Self {
+        Self(pos.0, pos.1)
+    }
+}
+
+impl<I: Integer> From<GridPos<I>> for (I, I) {
+    fn from(pos: GridPos<I>) -> Self {
+        (pos.0, pos.1)
+    }
+}
+
+impl<I: Integer + Copy> From<&GridPos<I>> for (I, I) {
+    fn from(pos: &GridPos<I>) -> Self {
+        (pos.0, pos.1)
+    }
 }

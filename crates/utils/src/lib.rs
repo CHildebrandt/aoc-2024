@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 pub mod direction;
 pub mod grid;
 // pub mod grid2;
@@ -7,7 +9,7 @@ pub fn split_double_newline(input: &str) -> Vec<&str> {
     re.split(input).collect()
 }
 
-fn answer(get: impl FnOnce() -> usize, actual: usize, is_test: bool, part: u8) {
+fn answer<T: PartialEq + Debug>(get: impl FnOnce() -> T, actual: T, is_test: bool, part: u8) {
     let time = std::time::Instant::now();
     assert_eq!(get(), actual);
     println!(
@@ -17,16 +19,16 @@ fn answer(get: impl FnOnce() -> usize, actual: usize, is_test: bool, part: u8) {
     );
     println!("Elapsed: {:.2?}", time.elapsed());
 }
-pub fn test_part1(get: impl FnOnce() -> usize, actual: usize) {
+pub fn test_part1<T: PartialEq + Debug>(get: impl FnOnce() -> T, actual: T) {
     answer(get, actual, true, 1);
 }
-pub fn answer_part1(get: impl FnOnce() -> usize, actual: usize) {
+pub fn answer_part1<T: PartialEq + Debug>(get: impl FnOnce() -> T, actual: T) {
     answer(get, actual, false, 1);
 }
-pub fn test_part2(get: impl FnOnce() -> usize, actual: usize) {
+pub fn test_part2<T: PartialEq + Debug>(get: impl FnOnce() -> T, actual: T) {
     answer(get, actual, true, 2);
 }
-pub fn answer_part2(get: impl FnOnce() -> usize, actual: usize) {
+pub fn answer_part2<T: PartialEq + Debug>(get: impl FnOnce() -> T, actual: T) {
     answer(get, actual, false, 2);
 }
 
