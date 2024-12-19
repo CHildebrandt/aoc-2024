@@ -1,16 +1,14 @@
 use std::collections::{HashMap, HashSet};
-
-use itertools::Itertools;
 use utils::*;
 
-fn is_possible_design(patterns: &HashSet<&str>, design: &str, start: usize) -> bool {
-    for n in start + 1..design.len() {
-        if patterns.contains(&design[start..n]) && n == design.len() - 1 {
+fn is_possible_design(design: &str, cursor: usize, patterns: &HashSet<&str>) -> bool {
+    for n in cursor + 1..design.len() {
+        if patterns.contains(&design[cursor..n]) && n == design.len() - 1 {
             return true;
         }
         for pattern in patterns {
-            if &design[start..n] == *pattern {
-                if is_possible_design(patterns, design, n) {
+            if &design[cursor..n] == *pattern {
+                if is_possible_design(design, n, patterns) {
                     return true;
                 }
             }
@@ -26,35 +24,36 @@ fn count_possible_designs(
     memo: &mut HashMap<usize, usize>,
 ) -> usize {
     if cursor == design.len() {
-        return 1;
+        1
+    } else if let Some(&num_combinations) = memo.get(&cursor) {
+        num_combinations
+    } else {
+        let num_combinations = patterns
+            .iter()
+            .filter(|pattern| design[cursor..].starts_with(*pattern))
+            .fold(0, |acc, pattern| {
+                acc + count_possible_designs(design, cursor + pattern.len(), patterns, memo)
+            });
+        memo.insert(cursor, num_combinations);
+        num_combinations
     }
-    if let Some(&num_combinations) = memo.get(&cursor) {
-        return num_combinations;
-    }
-    let num_combinations = patterns
-        .iter()
-        .filter(|pattern| design[cursor..].starts_with(*pattern))
-        .fold(0, |acc, pattern| {
-            acc + count_possible_designs(design, cursor + pattern.len(), patterns, memo)
-        });
-    memo.insert(cursor, num_combinations);
-    num_combinations
+}
+
+fn parse(input: &str) -> (HashSet<&str>, Vec<&str>) {
+    let (patterns, designs) = split_double_newline_once(input);
+    (patterns.split(", ").collect(), designs.lines().collect())
 }
 
 fn part1(input: &str) -> usize {
-    let (patterns, designs) = split_double_newline_once(input);
-    let patterns = patterns.split(", ").collect::<HashSet<_>>();
-    let designs = designs.lines().collect_vec();
+    let (patterns, designs) = parse(input);
     designs
         .iter()
-        .filter(|design| is_possible_design(&patterns, design, 0))
+        .filter(|design| is_possible_design(design, 0, &patterns))
         .count()
 }
 
 fn part2(input: &str) -> usize {
-    let (patterns, designs) = split_double_newline_once(input);
-    let patterns = patterns.split(", ").collect::<HashSet<_>>();
-    let designs = designs.lines().collect_vec();
+    let (patterns, designs) = parse(input);
     designs
         .iter()
         .map(|design| count_possible_designs(design, 0, &patterns, &mut HashMap::new()))
