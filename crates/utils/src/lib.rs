@@ -9,6 +9,11 @@ pub fn split_double_newline(input: &str) -> Vec<&str> {
     re.split(input).collect()
 }
 
+pub fn split_double_newline_once(input: &str) -> (&str, &str) {
+    let v = split_double_newline(input);
+    (v[0], v[1])
+}
+
 fn answer<T: PartialEq + Debug>(get: impl FnOnce() -> T, actual: T, is_test: bool, part: u8) {
     let time = std::time::Instant::now();
     assert_eq!(get(), actual);

@@ -434,6 +434,12 @@ impl<T: Debug + Clone + Default> Grid<T> {
     pub fn defaulted(height: usize, width: usize) -> Self {
         Self::blank(height, width, T::default())
     }
+
+    pub fn clear(&mut self) {
+        for cell in &mut self.data {
+            *cell = T::default();
+        }
+    }
 }
 
 impl<T: Debug + Clone + Eq + Hash> Grid<T> {
