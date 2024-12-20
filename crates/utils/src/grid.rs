@@ -91,6 +91,10 @@ impl<T: Debug + Clone> Grid<T> {
         }
     }
 
+    fn index_to_pos(&self, index: usize) -> Position {
+        (index / self.width, index % self.width)
+    }
+
     pub fn get(&self, (y, x): Position) -> Option<&T> {
         if y < self.height && x < self.width {
             Some(&self.data[y * self.width + x])
@@ -150,6 +154,18 @@ impl<T: Debug + Clone> Grid<T> {
         positions
     }
 
+    pub fn get_in_distance_cardinal(&self, pos: &Position, distance: usize) -> Vec<Position> {
+        let mut positions = vec![];
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if self.distance_cardinal(*pos, (y, x)) <= distance {
+                    positions.push((y, x));
+                }
+            }
+        }
+        positions
+    }
+
     pub fn validate_position(&self, pos: Position) -> bool {
         let (y, x) = pos;
         y < self.height && x < self.width
@@ -196,6 +212,14 @@ impl<T: Debug + Clone> Grid<T> {
         }
     }
 
+    pub fn iter(&self) -> GridIter<'_, T> {
+        GridIter::new(self)
+    }
+
+    pub fn iter_positions(&self) -> PositionIter<'_, T> {
+        PositionIter::new(self)
+    }
+
     pub fn iter_rows(&self) -> RowIter<'_, T> {
         RowIter::new(self)
     }
@@ -221,6 +245,15 @@ impl<T: Debug + Clone> Grid<T> {
             }
         }
         positions
+    }
+
+    pub fn map<U: Debug + Clone>(&self, f: impl Fn(&T) -> U) -> Grid<U> {
+        let data = self.data.iter().map(f).collect();
+        Grid {
+            data,
+            height: self.height,
+            width: self.width,
+        }
     }
 
     pub fn try_move_direction(
@@ -451,6 +484,54 @@ impl<T: Debug + Clone + Eq + Hash> Grid<T> {
     }
 }
 
+pub struct PositionIter<'a, T: Debug + Clone> {
+    grid: &'a Grid<T>,
+    i: usize,
+}
+
+impl<'a, T: Debug + Clone> PositionIter<'a, T> {
+    pub fn new(grid: &'a Grid<T>) -> Self {
+        Self { grid, i: 0 }
+    }
+}
+
+impl<'a, T: Debug + Clone> Iterator for PositionIter<'a, T> {
+    type Item = (usize, usize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let y = self.i / self.grid.width;
+        let x = self.i % self.grid.width;
+        self.i += 1;
+        if y < self.grid.height {
+            Some((y, x))
+        } else {
+            None
+        }
+    }
+}
+
+pub struct GridIter<'a, T: Debug + Clone> {
+    grid: &'a Grid<T>,
+    i: usize,
+}
+
+impl<'a, T: Debug + Clone> GridIter<'a, T> {
+    pub fn new(grid: &'a Grid<T>) -> Self {
+        Self { grid, i: 0 }
+    }
+}
+
+impl<'a, T: Debug + Clone> Iterator for GridIter<'a, T> {
+    type Item = (Position, &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.grid.data.get(self.i);
+        let pos = self.grid.index_to_pos(self.i);
+        self.i += 1;
+        next.map(|t| (pos, t))
+    }
+}
+
 pub struct RowIter<'a, T: Debug + Clone> {
     grid: &'a Grid<T>,
     i: usize,
@@ -674,6 +755,14 @@ impl<T: Debug + Clone + Obstructs> Grid<T> {
         pos: &'a Position,
     ) -> impl Iterator<Item = (Position, &T)> + 'a {
         self.neighbor_iter::<D>(pos).filter(|(_, t)| !t.obstructs())
+    }
+
+    pub fn neighbor_iter_unobstructed_cardinal<'a>(
+        &'a self,
+        pos: &'a Position,
+    ) -> impl Iterator<Item = (Position, &T)> + 'a {
+        self.neighbor_iter::<CardinalDirection>(pos)
+            .filter(|(_, t)| !t.obstructs())
     }
 
     pub fn astar<D: Direction + 'static>(
