@@ -1,6 +1,5 @@
 use grid::{Grid, Obstructs};
 use itertools::Itertools;
-use pathfinding::prelude::astar;
 use utils::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -32,38 +31,19 @@ fn solve(input: &str, min_save: usize, jump_distance: usize) -> usize {
     let start = grid.find(|c| c == &'S').unwrap();
     let end = grid.find(|c| c == &'E').unwrap();
     let grid = Grid::from_str(input, Tile::from);
-    let min_score = grid.astar_cardinal(&start, &end).unwrap().1;
-    let empty = grid
+    let win_path = grid.astar_cardinal(&start, &end).unwrap().0;
+    win_path
         .iter()
-        .filter_map(|(pos, &tile)| (tile == Tile::Empty).then_some(pos))
-        .collect_vec();
-    empty
-        .iter()
+        .rev()
+        .enumerate()
         .tuple_combinations()
-        .filter(|(a, b)| grid.distance_cardinal(**a, **b) <= jump_distance)
-        .filter(|(a, b)| {
-            grid.astar_cardinal(a, b)
-                .and_then(|(_, score)| (score > min_save).then_some(score))
-                .is_some()
-        })
-        .filter(|&(a, b)| {
-            astar(
-                &(false, start),
-                |(has_jumped, pos)| {
-                    if !has_jumped && pos == a {
-                        vec![((true, *b), grid.distance_cardinal(*pos, *b))]
-                    } else if !has_jumped && pos == b {
-                        vec![((true, *a), grid.distance_cardinal(*pos, *a))]
-                    } else {
-                        grid.neighbor_iter_unobstructed_cardinal(pos)
-                            .map(|(pos, _)| ((*has_jumped, pos), 1))
-                            .collect()
-                    }
-                },
-                |(_, pos)| grid.distance_cardinal(*pos, end),
-                |(_, pos)| pos == &end,
-            )
-            .is_some_and(|(_, score)| score <= min_score - min_save)
+        .filter(|((a_to_end_distance, a), (b_to_end_distance, b))| {
+            let a_to_b_jump_distance = grid.distance_cardinal(**a, **b);
+            a_to_b_jump_distance <= jump_distance
+                && a_to_end_distance
+                    .abs_diff(*b_to_end_distance)
+                    .checked_sub(a_to_b_jump_distance)
+                    .is_some_and(|saved| saved >= min_save)
         })
         .count()
 }
@@ -82,5 +62,5 @@ fn main() {
     test_part1(|| part1(TEST, 1), 44);
     answer_part1(|| part1(INPUT, 100), 1518);
     test_part2(|| part2(TEST, 50), 285);
-    // answer_part2(|| part2(INPUT, 100), 1518);
+    answer_part2(|| part2(INPUT, 100), 1032257);
 }

@@ -1,12 +1,22 @@
 mod testing {
     #[test]
     fn run_main_of_all_crates_with_day_in_name() {
-        let crates = std::fs::read_dir(format!("{}/{}", env!("CARGO_MANIFEST_DIR"), "crates"))
+        let mut crates = std::fs::read_dir(format!("{}/{}", env!("CARGO_MANIFEST_DIR"), "crates"))
             .unwrap()
             .map(|entry| entry.unwrap().path())
             .filter(|path| path.is_dir())
             .filter(|path| path.file_name().unwrap().to_str().unwrap().contains("day"))
             .collect::<Vec<_>>();
+        crates.sort_by(|a, b| {
+            a.file_name().unwrap().to_str().unwrap()[3..]
+                .parse::<usize>()
+                .unwrap()
+                .cmp(
+                    &b.file_name().unwrap().to_str().unwrap()[3..]
+                        .parse::<usize>()
+                        .unwrap(),
+                )
+        });
         let time = std::time::Instant::now();
         for crate_path in crates {
             let crate_name = crate_path.file_name().unwrap().to_str().unwrap();
