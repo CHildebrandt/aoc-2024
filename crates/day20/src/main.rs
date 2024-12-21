@@ -2,7 +2,7 @@ use grid::{Grid, Obstructs};
 use itertools::Itertools;
 use utils::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 enum Tile {
     Empty,
     Wall,
@@ -26,7 +26,7 @@ impl Obstructs for Tile {
     }
 }
 
-fn solve(input: &str, min_save: usize, jump_distance: usize) -> usize {
+fn solve(input: &str, min_save: usize, max_cheat: usize) -> usize {
     let grid = Grid::char_grid(input);
     let start = grid.find(|c| c == &'S').unwrap();
     let end = grid.find(|c| c == &'E').unwrap();
@@ -34,15 +34,14 @@ fn solve(input: &str, min_save: usize, jump_distance: usize) -> usize {
     let win_path = grid.astar_cardinal(&start, &end).unwrap().0;
     win_path
         .iter()
-        .rev()
         .enumerate()
         .tuple_combinations()
-        .filter(|((a_to_end_distance, a), (b_to_end_distance, b))| {
-            let a_to_b_jump_distance = grid.distance_cardinal(**a, **b);
-            a_to_b_jump_distance <= jump_distance
-                && a_to_end_distance
-                    .abs_diff(*b_to_end_distance)
-                    .checked_sub(a_to_b_jump_distance)
+        .filter(|&((a_steps, a), (b_steps, b))| {
+            let a_to_b_cheat_distance = grid.distance_cardinal(a, b);
+            a_to_b_cheat_distance <= max_cheat
+                && a_steps
+                    .abs_diff(b_steps)
+                    .checked_sub(a_to_b_cheat_distance)
                     .is_some_and(|saved| saved >= min_save)
         })
         .count()

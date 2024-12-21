@@ -1,6 +1,7 @@
 use num::{Integer, Signed, Unsigned};
 
 use crate::direction::{CardinalDirection, Direction, OrdinalDirection, PositionVirtual};
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
@@ -309,7 +310,10 @@ impl<T: Debug + Clone> Grid<T> {
         let mut groups = HashMap::new();
         for (y, row) in self.iter_rows().enumerate() {
             for (x, cell) in row.iter().enumerate() {
-                groups.entry(f(cell)).or_insert(vec![]).push(((y, x), cell));
+                groups
+                    .entry(f(cell))
+                    .or_insert_with(Vec::new)
+                    .push(((y, x), cell));
             }
         }
         groups
@@ -364,10 +368,14 @@ impl<T: Debug + Clone> Grid<T> {
         self.neighbors_virtual::<OrdinalDirection>(pos)
     }
 
-    pub fn distance_cardinal(&self, pos_a: Position, pos_b: Position) -> usize {
-        let (y1, x1) = pos_a;
-        let (y2, x2) = pos_b;
-        y1.abs_diff(y2) + x1.abs_diff(x2)
+    pub fn distance_cardinal<P: Borrow<Position>, Q: Borrow<Position>>(
+        &self,
+        pos_a: P,
+        pos_b: Q,
+    ) -> usize {
+        let (y1, x1) = pos_a.borrow();
+        let (y2, x2) = pos_b.borrow();
+        y1.abs_diff(*y2) + x1.abs_diff(*x2)
     }
 
     // TODO: naming
