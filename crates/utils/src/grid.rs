@@ -92,6 +92,40 @@ impl<T: Debug + Clone> Grid<T> {
         }
     }
 
+    pub fn from_2d_vec(data: Vec<Vec<T>>) -> Self {
+        let height = data.len();
+        assert_ne!(height, 0, "Empty grid!");
+        let width = data[0].len();
+        assert_ne!(width, 0, "Empty grid!");
+        let mut flat_data = Vec::with_capacity(height * width);
+        for row in data {
+            assert_eq!(row.len(), width, "Inconsistent row length!");
+            flat_data.extend(row);
+        }
+        Self {
+            data: flat_data,
+            width,
+            height,
+        }
+    }
+
+    pub fn from_2d_slice(data: &[&[T]]) -> Self {
+        let height = data.len();
+        assert_ne!(height, 0, "Empty grid!");
+        let width = data[0].len();
+        assert_ne!(width, 0, "Empty grid!");
+        let mut flat_data = Vec::with_capacity(height * width);
+        for row in data {
+            assert_eq!(row.len(), width, "Inconsistent row length!");
+            flat_data.extend_from_slice(row);
+        }
+        Self {
+            data: flat_data,
+            width,
+            height,
+        }
+    }
+
     fn index_to_pos(&self, index: usize) -> Position {
         (index / self.width, index % self.width)
     }
@@ -804,5 +838,38 @@ impl<T: Debug + Clone + Obstructs> Grid<T> {
         end: &Position,
     ) -> Option<(Vec<Position>, usize)> {
         self.astar::<OrdinalDirection>(start, end)
+    }
+
+    pub fn astar_bag<D: Direction + 'static>(
+        &self,
+        start: &Position,
+        end: &Position,
+    ) -> Option<(pathfinding::prelude::AstarSolution<Position>, usize)> {
+        pathfinding::prelude::astar_bag(
+            start,
+            |pos| {
+                self.neighbor_iter_unobstructed::<D>(pos)
+                    .map(|(n, _)| (n, 1))
+                    .collect::<Vec<_>>()
+            },
+            |pos| self.distance_cardinal(*pos, *end),
+            |pos| pos == end,
+        )
+    }
+
+    pub fn astar_bag_cardinal(
+        &self,
+        start: &Position,
+        end: &Position,
+    ) -> Option<(pathfinding::prelude::AstarSolution<Position>, usize)> {
+        self.astar_bag::<CardinalDirection>(start, end)
+    }
+
+    pub fn astar_bag_ordinal(
+        &self,
+        start: &Position,
+        end: &Position,
+    ) -> Option<(pathfinding::prelude::AstarSolution<Position>, usize)> {
+        self.astar_bag::<OrdinalDirection>(start, end)
     }
 }
