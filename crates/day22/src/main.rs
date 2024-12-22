@@ -18,11 +18,12 @@ fn update_secret(secret: &mut usize) {
     *secret = mix_and_prune(*secret, *secret * 2048);
 }
 
+fn parse_input(input: &str) -> Vec<usize> {
+    input.lines().map(|line| line.parse().unwrap()).collect()
+}
+
 fn part1(input: &str) -> usize {
-    let mut secret_numbers = input
-        .lines()
-        .map(|line| line.parse::<usize>().unwrap())
-        .collect_vec();
+    let mut secret_numbers = parse_input(input);
     for _ in 0..2000 {
         secret_numbers.iter_mut().for_each(update_secret);
     }
@@ -30,10 +31,7 @@ fn part1(input: &str) -> usize {
 }
 
 fn part2(input: &str) -> usize {
-    let mut secret_numbers = input
-        .lines()
-        .map(|line| line.parse::<usize>().unwrap())
-        .collect_vec();
+    let mut secret_numbers = parse_input(input);
     let mut price_changes: Vec<Vec<(usize, Option<isize>)>> = vec![vec![]; secret_numbers.len()];
     for _ in 0..2000 {
         for (num, changes) in secret_numbers.iter_mut().zip(price_changes.iter_mut()) {
@@ -47,7 +45,7 @@ fn part2(input: &str) -> usize {
             changes.push((last_digit_before, change));
         }
     }
-    let mut map = HashMap::<(isize, isize, isize, isize), Vec<usize>>::new();
+    let mut sequence_map = HashMap::new();
     price_changes.iter().for_each(|changes| {
         changes
             .iter()
@@ -56,20 +54,16 @@ fn part2(input: &str) -> usize {
             .tuple_windows()
             .filter(|(a, b, c, d)| a.1 != b.1 && b.1 != c.1 && c.1 != d.1)
             .map(|(a, b, c, d)| ((a.1, b.1, c.1, d.1), d.0))
-            .unique_by(|&(sequence, _)| sequence)
-            .for_each(|(sequence, score)| {
-                if !map.contains_key(&sequence) {
-                    map.insert(sequence, vec![]);
-                }
-                map.get_mut(&sequence).unwrap().push(score);
+            .unique_by(|(sequence, _)| *sequence)
+            .for_each(|(sequence, price_at_sequence)| {
+                *sequence_map.entry(sequence).or_insert(0) += price_at_sequence;
             });
     });
-    map.iter()
-        .max_by(|(_, a), (_, b)| a.iter().sum::<usize>().cmp(&b.iter().sum::<usize>()))
-        .unwrap()
-        .1
+    sequence_map
         .iter()
-        .sum()
+        .map(|(_, bananas)| *bananas)
+        .max()
+        .unwrap()
 }
 
 fn main() {

@@ -2,7 +2,6 @@ use std::fmt::Debug;
 
 pub mod direction;
 pub mod grid;
-// pub mod grid2;
 
 pub fn split_double_newline(input: &str) -> Vec<&str> {
     let re = regex::Regex::new(r"\r?\n\r?\n").unwrap();
@@ -14,6 +13,13 @@ pub fn split_double_newline_once(input: &str) -> (&str, &str) {
     (v[0], v[1])
 }
 
+/// Extracts the last digit of a number
+/// # Examples
+/// ```
+/// assert_eq!(utils::extract_last_digit(123), 3);
+/// assert_eq!(utils::extract_last_digit(0), 0);
+/// assert_eq!(utils::extract_last_digit(1), 1);
+/// ```
 pub fn extract_last_digit(num: usize) -> usize {
     num.to_string()
         .chars()
