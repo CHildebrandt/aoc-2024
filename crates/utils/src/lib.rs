@@ -14,6 +14,15 @@ pub fn split_double_newline_once(input: &str) -> (&str, &str) {
     (v[0], v[1])
 }
 
+pub fn extract_last_digit(num: usize) -> usize {
+    num.to_string()
+        .chars()
+        .last()
+        .unwrap()
+        .to_digit(10)
+        .unwrap() as usize
+}
+
 fn answer<T: PartialEq + Debug>(get: impl FnOnce() -> T, actual: T, is_test: bool, part: u8) {
     let time = std::time::Instant::now();
     assert_eq!(get(), actual);
