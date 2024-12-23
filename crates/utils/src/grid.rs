@@ -1,6 +1,7 @@
 use num::{Integer, Signed, Unsigned};
 
 use crate::direction::{CardinalDirection, Direction, OrdinalDirection, PositionVirtual};
+use itertools::Itertools;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
@@ -526,6 +527,7 @@ impl<T: Debug + Clone + Eq + Hash> Grid<T> {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct PositionIter<'a, T: Debug + Clone> {
     grid: &'a Grid<T>,
     i: usize,
@@ -871,5 +873,32 @@ impl<T: Debug + Clone + Obstructs> Grid<T> {
         end: &Position,
     ) -> Option<(pathfinding::prelude::AstarSolution<Position>, usize)> {
         self.astar_bag::<OrdinalDirection>(start, end)
+    }
+
+    /// Returns a map of all best paths between all pairs of positions.
+    /// The map will not contain paths for positions that are not reachable.
+    /// The map will not contain paths that are empty.
+    /// Might be expensive for large grids.
+    pub fn paths_map<D: Direction + 'static>(
+        &self,
+    ) -> HashMap<(Position, Position), Vec<Vec<Position>>> {
+        self.iter_positions()
+            .filter(|pos| !self[*pos].obstructs())
+            .tuple_combinations()
+            .fold(HashMap::new(), |mut map, (a, b)| {
+                if let Some((solutions, _)) = self.astar_bag::<D>(&a, &b) {
+                    let mut forwards = vec![];
+                    let mut backwards = vec![];
+                    solutions.for_each(|solution| {
+                        let mut path = solution.clone();
+                        forwards.push(path.clone());
+                        path.reverse();
+                        backwards.push(path);
+                    });
+                    map.insert((a, b), forwards);
+                    map.insert((b, a), backwards);
+                }
+                map
+            })
     }
 }

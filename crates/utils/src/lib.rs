@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+pub mod cache;
 pub mod direction;
 pub mod grid;
 

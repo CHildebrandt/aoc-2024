@@ -1,4 +1,4 @@
-use std::ops::Neg;
+use std::{cmp::Ordering, ops::Neg};
 
 pub type PositionVirtual = (isize, isize);
 
@@ -49,6 +49,16 @@ impl CardinalDirection {
             (0, x) if x < 0 => Some(Self::West),
             (y, 0) if y > 0 => Some(Self::South),
             (y, 0) if y < 0 => Some(Self::North),
+            _ => None,
+        }
+    }
+
+    pub fn from_cmp(y_cmp: Ordering, x_cmp: Ordering) -> Option<Self> {
+        match (y_cmp, x_cmp) {
+            (Ordering::Less, Ordering::Equal) => Some(Self::North),
+            (Ordering::Greater, Ordering::Equal) => Some(Self::South),
+            (Ordering::Equal, Ordering::Less) => Some(Self::West),
+            (Ordering::Equal, Ordering::Greater) => Some(Self::East),
             _ => None,
         }
     }
