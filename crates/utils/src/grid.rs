@@ -260,6 +260,10 @@ impl<T: Debug + Clone> Grid<T> {
         RowIter::new(self)
     }
 
+    pub fn iter_cols(&self) -> ColIter<'_, T> {
+        ColIter::new(self)
+    }
+
     pub fn find(&self, f: impl Fn(&T) -> bool) -> Option<Position> {
         for (y, row) in self.iter_rows().enumerate() {
             for (x, cell) in row.iter().enumerate() {
