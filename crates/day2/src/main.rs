@@ -1,68 +1,49 @@
+use itertools::Itertools;
+use utils::*;
+
 fn part1(input: &str) -> usize {
-    let input = input
+    input
         .lines()
-        .filter(|line| !line.is_empty())
-        .map(|line| {
-            line.split_whitespace()
-                .map(|val| val.parse::<usize>().unwrap())
-                .collect::<Vec<_>>()
+        .map(utils::whitespaced_ints)
+        .filter(|row| {
+            let ascending = row[0] < row[1];
+            !row.iter().tuple_windows().any(|(curr, next)| {
+                (ascending && curr >= next)
+                    || (!ascending && curr <= next)
+                    || curr.abs_diff(*next) > 3
+            })
         })
-        .collect::<Vec<_>>();
-    input.iter().fold(0, |acc, row| {
-        let mut iter = row.iter();
-        let ascending = iter.next().unwrap() < iter.next().unwrap();
-        let mut iter = row.iter().peekable();
-        while let Some((curr, next)) = iter.next().zip(iter.peek()) {
-            if (ascending && curr >= next)
-                || (!ascending && curr <= next)
-                || curr.abs_diff(**next) > 3
-            {
-                return acc;
-            }
-        }
-        acc + 1
-    })
+        .count()
 }
 
 fn check(row: &Vec<usize>) -> bool {
-    let mut diffs: Vec<isize> = vec![];
-    let mut iter = row.iter().peekable();
-    while let Some((curr, next)) = iter.next().zip(iter.peek()) {
-        diffs.push(*curr as isize - **next as isize);
-    }
+    let diffs = row
+        .iter()
+        .tuple_windows()
+        .map(|(curr, next)| *next as isize - *curr as isize)
+        .collect::<Vec<_>>();
     diffs.iter().all(|diff| (1..=3).contains(diff))
         || diffs.iter().all(|diff| (-3..=-1).contains(diff))
 }
 
 fn part2(input: &str) -> usize {
-    let input = input
+    input
         .lines()
-        .filter(|line| !line.is_empty())
-        .map(|line| {
-            line.split_whitespace()
-                .map(|val| val.parse::<usize>().unwrap())
-                .collect::<Vec<_>>()
+        .map(utils::whitespaced_ints)
+        .filter(|row| {
+            check(&row)
+                || row.iter().enumerate().any(|(i, _)| {
+                    let mut row = row.clone();
+                    row.remove(i);
+                    check(&row)
+                })
         })
-        .collect::<Vec<_>>();
-    input.iter().fold(0, |acc, row| {
-        if check(row) {
-            acc + 1
-        } else {
-            for i in 0..row.len() {
-                let mut row = row.clone();
-                row.remove(i);
-                if check(&row) {
-                    return acc + 1;
-                }
-            }
-            acc
-        }
-    })
+        .count()
 }
 
 fn main() {
-    assert_eq!(part1(include_str!("./test")), 2);
-    assert_eq!(part1(include_str!("./input")), 369);
-    assert_eq!(part2(include_str!("./test")), 4);
-    assert_eq!(part2(include_str!("./input")), 428);
+    part1_test!(2);
+    part1_answer!(369);
+    part2_test!(4);
+    part2_answer!(428);
 }

@@ -19,51 +19,43 @@ impl From<char> for Tile {
 }
 
 fn part1(input: &str) -> usize {
-    let grids = split_double_newline(input)
-        .iter()
-        .map(|grid| Grid::from_str(&grid, Tile::from))
-        .collect_vec();
     let mut lock_grids = vec![];
     let mut key_grids = vec![];
-    for grid in grids.iter() {
+    for grid in split_double_newline(input)
+        .iter()
+        .map(|grid| Grid::from_str(&grid, Tile::from))
+    {
         let is_lock = grid[(0usize, 0usize)] == Tile::Filled;
+        let items = grid
+            .iter_cols()
+            .map(|col| {
+                col.iter()
+                    .take(if is_lock { col.len() } else { col.len() - 1 })
+                    .skip(1)
+                    .filter(|&tile| tile == &Tile::Filled)
+                    .count()
+            })
+            .collect_vec();
         if is_lock {
-            lock_grids.push(
-                grid.iter_cols()
-                    .map(|col| {
-                        col.iter()
-                            .skip(1)
-                            .filter(|&tile| tile == &Tile::Filled)
-                            .count()
-                    })
-                    .collect_vec(),
-            );
+            lock_grids.push(items);
         } else {
-            key_grids.push(
-                grid.iter_cols()
-                    .map(|col| {
-                        col.iter()
-                            .take(col.len() - 1)
-                            .filter(|&tile| tile == &Tile::Filled)
-                            .count()
-                    })
-                    .collect_vec(),
-            );
+            key_grids.push(items);
         }
     }
-    let mut count = 0;
-    for lock_heights in lock_grids.iter() {
-        for key_heights in key_grids.iter() {
-            if lock_heights
+    lock_grids
+        .iter()
+        .cartesian_product(key_grids.iter())
+        .fold(0, |acc, (lock, key)| {
+            if lock
                 .iter()
-                .zip(key_heights.iter())
+                .zip(key.iter())
                 .all(|(lock_height, key_height)| lock_height + key_height <= 5)
             {
-                count += 1;
+                acc + 1
+            } else {
+                acc
             }
-        }
-    }
-    count
+        })
 }
 
 fn main() {

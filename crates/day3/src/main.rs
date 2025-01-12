@@ -1,3 +1,5 @@
+use utils::*;
+
 fn part1(input: &str) -> usize {
     let rgx = regex::Regex::new(r"mul\((\d+),(\d+)\)").unwrap();
     rgx.captures_iter(input)
@@ -34,8 +36,8 @@ fn part2(input: &str) -> usize {
 }
 
 fn main() {
-    assert_eq!(part1(include_str!("./test")), 161);
-    assert_eq!(part1(include_str!("./input")), 175015740);
-    assert_eq!(part2(include_str!("./test2")), 48);
-    assert_eq!(part2(include_str!("./input")), 112272912);
+    part1_test!(161);
+    part1_answer!(175015740);
+    test_part2(|| part2(include_str!("input/test2.txt")), 48);
+    part2_answer!(112272912);
 }

@@ -1,8 +1,5 @@
 use utils::*;
 
-const TEST: &str = include_str!("./input/test.txt");
-const INPUT: &str = include_str!("./input/input.txt");
-
 fn parse(input: &str) -> Vec<(usize, Vec<usize>)> {
     input
         .lines()
@@ -19,7 +16,6 @@ fn parse(input: &str) -> Vec<(usize, Vec<usize>)> {
         .collect()
 }
 
-#[derive(Clone, Copy)]
 enum Op {
     Add,
     Mul,
@@ -51,24 +47,24 @@ fn can_eval_to(nums: &[usize], value: usize, using_ops: &[Op]) -> bool {
 }
 
 fn part1(input: &str) -> usize {
-    parse(input).iter().fold(0, |acc, (sum, nums)| {
-        can_eval_to(nums, *sum, &[Op::Add, Op::Mul])
-            .then_some(acc + sum)
-            .unwrap_or(acc)
-    })
+    parse(input)
+        .iter()
+        .filter_map(|(sum, nums)| can_eval_to(nums, *sum, &[Op::Add, Op::Mul]).then_some(sum))
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
-    parse(input).iter().fold(0, |acc, (sum, nums)| {
-        can_eval_to(nums, *sum, &[Op::Add, Op::Mul, Op::Concat])
-            .then_some(acc + sum)
-            .unwrap_or(acc)
-    })
+    parse(input)
+        .iter()
+        .filter_map(|(sum, nums)| {
+            can_eval_to(nums, *sum, &[Op::Add, Op::Mul, Op::Concat]).then_some(sum)
+        })
+        .sum()
 }
 
 fn main() {
-    test_part1(|| part1(TEST), 3749);
-    answer_part1(|| part1(INPUT), 975671981569);
-    test_part2(|| part2(TEST), 11387);
-    answer_part2(|| part2(INPUT), 223472064194845);
+    part1_test!(3749);
+    part1_answer!(975671981569);
+    part2_test!(11387);
+    part2_answer!(223472064194845);
 }

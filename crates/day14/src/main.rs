@@ -111,18 +111,23 @@ fn part1(input: &str, width: usize, height: usize) -> usize {
 fn part2(input: &str) -> usize {
     let grid = Grid::blank(103, 101, '.');
     let mut robots = input.lines().map(Robot::from_str).collect_vec();
+    let mut checked = HashSet::new();
+    let mut pos_set = HashSet::new();
     for sec in 1..100_000 {
+        checked.clear();
+        pos_set.clear();
         robots.iter_mut().for_each(|robot| robot.next_pos(&grid));
-        let pos_set = robots.iter().map(|robot| robot.pos).collect::<HashSet<_>>();
-        let mut checked = HashSet::new();
-        let neighboring = robots.iter().fold(0, |acc, robot| {
-            checked.insert(robot.pos);
-            acc + grid
-                .neighbors_ordinal(robot.pos)
-                .iter()
-                .filter(|pos| !checked.contains(pos) && pos_set.contains(pos))
-                .count()
-        });
+        pos_set.extend(robots.iter().map(|robot| robot.pos));
+        let neighboring = robots
+            .iter()
+            .map(|robot| {
+                checked.insert(robot.pos);
+                grid.neighbors_ordinal(robot.pos)
+                    .iter()
+                    .filter(|pos| !checked.contains(pos) && pos_set.contains(pos))
+                    .count()
+            })
+            .sum::<usize>();
         let neighboring = neighboring / 2;
         if neighboring > robots.len() / 2 {
             return sec;

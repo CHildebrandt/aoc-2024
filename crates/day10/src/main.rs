@@ -63,18 +63,23 @@ fn part1(input: &str) -> usize {
 
 fn part2(input: &str) -> usize {
     let map = HeightMap::from_str(input);
-    map.trail_heads.iter().fold(0, |sum, trail_head| {
-        sum + map.peaks.iter().fold(0, |sum, peak| {
-            sum + astar_bag(
-                trail_head,
-                |curr_pos| map.neighbors(curr_pos),
-                |pos| map.heuristic(*pos, *peak),
-                |pos| pos == peak,
-            )
-            .map(|(solution, _)| solution.count())
-            .unwrap_or(0)
+    map.trail_heads
+        .iter()
+        .map(|trail_head| {
+            map.peaks
+                .iter()
+                .filter_map(|peak| {
+                    astar_bag(
+                        trail_head,
+                        |curr_pos| map.neighbors(curr_pos),
+                        |pos| map.heuristic(*pos, *peak),
+                        |pos| pos == peak,
+                    )
+                    .map(|(solution, _)| solution.count())
+                })
+                .sum::<usize>()
         })
-    })
+        .sum()
 }
 
 fn main() {

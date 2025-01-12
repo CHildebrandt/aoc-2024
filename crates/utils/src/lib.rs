@@ -30,6 +30,13 @@ pub fn extract_last_digit(num: usize) -> usize {
         .unwrap() as usize
 }
 
+pub fn whitespaced_ints(input: &str) -> Vec<usize> {
+    input
+        .split_whitespace()
+        .filter_map(|line| line.parse().ok())
+        .collect()
+}
+
 fn answer<T: PartialEq + Debug>(get: impl FnOnce() -> T, actual: T, is_test: bool, part: u8) {
     let time = std::time::Instant::now();
     assert_eq!(get(), actual);

@@ -1,27 +1,32 @@
 use itertools::Itertools;
 use std::collections::HashSet;
+use utils::*;
 
-fn parse(input: &str) -> (Vec<(&str, &str)>, Vec<Vec<&str>>) {
-    let split_point = input.lines().position(|line| line.is_empty()).unwrap();
-    let ordering_rules = input
-        .lines()
-        .take(split_point)
-        .map(|line| line.split_once("|").unwrap())
-        .collect::<Vec<_>>();
-    let updates = input
-        .lines()
-        .skip(split_point + 1)
-        .map(|line| line.split(",").collect::<Vec<_>>())
-        .collect::<Vec<_>>();
-    (ordering_rules, updates)
+fn parse(input: &str) -> (Vec<(usize, usize)>, Vec<Vec<usize>>) {
+    let (ordering_rules, updates) = utils::split_double_newline_once(input);
+    (
+        ordering_rules
+            .lines()
+            .map(|line| line.split_once("|").unwrap())
+            .map(|(a, b)| (a.parse().unwrap(), b.parse().unwrap()))
+            .collect::<Vec<_>>(),
+        updates
+            .lines()
+            .map(|line| {
+                line.split(",")
+                    .map(|s| s.parse().unwrap())
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>(),
+    )
 }
 
 fn part1(input: &str) -> usize {
     let (ordering_rules, updates) = parse(input);
-    let valid_updates = updates
+    updates
         .iter()
         .filter(|page_nums| {
-            let mut set = HashSet::<&str>::new();
+            let mut set = HashSet::<usize>::new();
             page_nums.iter().all(|page_num| {
                 if set.iter().any(|visited| visited == page_num) {
                     false
@@ -36,12 +41,8 @@ fn part1(input: &str) -> usize {
                 }
             })
         })
-        .collect::<Vec<_>>();
-    valid_updates.iter().fold(0, |acc, instruction| {
-        acc + instruction[(instruction.len() as f32 / 2.0).floor() as usize]
-            .parse::<usize>()
-            .unwrap()
-    })
+        .map(|instruction| instruction[instruction.len() / 2])
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
@@ -49,7 +50,7 @@ fn part2(input: &str) -> usize {
     updates
         .iter_mut()
         .filter(|page_nums| {
-            let mut set = HashSet::<&str>::new();
+            let mut set = HashSet::<usize>::new();
             !page_nums.iter().all(|page_num| {
                 if set.iter().any(|visited| visited == page_num) {
                     false
@@ -76,16 +77,13 @@ fn part2(input: &str) -> usize {
                 }
             });
         })
-        .fold(0, |acc, instruction| {
-            acc + instruction[(instruction.len() as f32 / 2.0).floor() as usize]
-                .parse::<usize>()
-                .unwrap()
-        })
+        .map(|instruction| instruction[instruction.len() / 2])
+        .sum()
 }
 
 fn main() {
-    assert_eq!(part1(include_str!("./test")), 143);
-    assert_eq!(part1(include_str!("./input")), 6260);
-    assert_eq!(part2(include_str!("./test")), 123);
-    assert_eq!(part2(include_str!("./input")), 5346);
+    part1_test!(143);
+    part1_answer!(6260);
+    part2_test!(123);
+    part2_answer!(5346);
 }

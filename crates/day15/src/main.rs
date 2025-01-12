@@ -51,11 +51,11 @@ impl std::fmt::Display for Item {
 }
 
 fn part1(input: &str) -> usize {
-    let input = split_double_newline(input);
-    let mut grid = grid::Grid::from_str(input[0], Item::from_char);
+    let (map, directions) = split_double_newline_once(input);
+    let mut grid = grid::Grid::from_str(map, Item::from_char);
     let mut robot_pos = grid.find(|x| x == &Item::Robot).unwrap();
     grid.replace(&robot_pos, Item::Empty);
-    let directions = input[1]
+    let directions = directions
         .lines()
         .join("")
         .chars()
@@ -98,7 +98,8 @@ fn part1(input: &str) -> usize {
     }
     grid.find_many(|x| x == &Item::Box)
         .iter()
-        .fold(0, |acc, x| acc + x.0 * 100 + x.1)
+        .map(|x| x.0 * 100 + x.1)
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
@@ -107,11 +108,11 @@ fn part2(input: &str) -> usize {
         .replace("O", "[]")
         .replace(".", "..")
         .replace("@", "@.");
-    let input = split_double_newline(input);
-    let mut grid = grid::Grid::from_str(input[0], Item::from_char);
+    let (map, directions) = split_double_newline_once(input);
+    let mut grid = grid::Grid::from_str(map, Item::from_char);
     let mut robot_pos = grid.find(|x| x == &Item::Robot).unwrap();
     grid.replace(&robot_pos, Item::Empty);
-    let directions = input[1]
+    let directions = directions
         .lines()
         .join("")
         .chars()
@@ -234,7 +235,8 @@ fn part2(input: &str) -> usize {
     }
     grid.find_many(|x| x == &Item::BoxL)
         .iter()
-        .fold(0, |acc, x| acc + x.0 * 100 + x.1)
+        .map(|x| x.0 * 100 + x.1)
+        .sum()
 }
 
 fn main() {

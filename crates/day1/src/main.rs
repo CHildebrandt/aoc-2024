@@ -1,4 +1,7 @@
-fn part1(input: &str) -> usize {
+use itertools::Itertools;
+use utils::*;
+
+fn parse(input: &str) -> (Vec<usize>, Vec<usize>) {
     let list = input
         .lines()
         .map(|line| {
@@ -8,39 +11,31 @@ fn part1(input: &str) -> usize {
                 r.trim().parse::<usize>().unwrap(),
             )
         })
-        .collect::<Vec<_>>();
-    let mut left_sorted = list.iter().map(|(l, _)| l).collect::<Vec<_>>();
-    left_sorted.sort();
-    let mut right_sorted = list.iter().map(|(_, r)| r).collect::<Vec<_>>();
-    right_sorted.sort();
-    left_sorted
-        .iter()
-        .zip(right_sorted.iter())
-        .fold(0, |acc, (l, r)| acc + **l.max(r) - **l.min(r))
+        .collect_vec();
+    (
+        list.iter().map(|(l, _)| *l).sorted().collect(),
+        list.iter().map(|(_, r)| *r).sorted().collect(),
+    )
+}
+
+fn part1(input: &str) -> usize {
+    let (left, right) = parse(input);
+    left.iter()
+        .zip(right.iter())
+        .map(|(l, r)| l.abs_diff(*r))
+        .sum()
 }
 
 fn part2(input: &str) -> usize {
-    let list = input
-        .lines()
-        .map(|line| {
-            let (l, r) = line.split_at(line.len() / 2);
-            (
-                l.trim().parse::<usize>().unwrap(),
-                r.trim().parse::<usize>().unwrap(),
-            )
-        })
-        .collect::<Vec<_>>();
-    list.iter().fold(0, |acc, (l, _)| {
-        let occurences = list
-            .iter()
-            .fold(0, |acc, (_, r)| if l == r { acc + 1 } else { acc });
-        acc + *l * occurences
-    })
+    let (left, right) = parse(input);
+    left.iter()
+        .map(|l| *l * right.iter().filter(|r| l == *r).count())
+        .sum()
 }
 
 fn main() {
-    assert_eq!(part1(include_str!("./test")), 11);
-    assert_eq!(part1(include_str!("./input")), 1222801);
-    assert_eq!(part2(include_str!("./test")), 31);
-    assert_eq!(part2(include_str!("./input")), 22545250);
+    part1_test!(11);
+    part1_answer!(1222801);
+    part2_test!(31);
+    part2_answer!(22545250);
 }

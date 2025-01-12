@@ -1,9 +1,6 @@
 use itertools::Itertools;
 use utils::*;
 
-const TEST: &str = include_str!("./input/test.txt");
-const INPUT: &str = include_str!("./input/input.txt");
-
 #[derive(Debug, Clone)]
 struct DiskMapEntry {
     pub id: usize,
@@ -11,7 +8,7 @@ struct DiskMapEntry {
     pub free: usize,
 }
 
-fn part1(input: &str) -> usize {
+fn parse_input(input: &str) -> Vec<DiskMapEntry> {
     let nums = input
         .chars()
         .map(|c| c.to_digit(10).unwrap() as usize)
@@ -24,7 +21,7 @@ fn part1(input: &str) -> usize {
     }
     items.push(*nums.last().unwrap());
     items.push(0); // To make len even
-    let with_ids = items
+    items
         .iter()
         .tuples()
         .enumerate()
@@ -33,7 +30,11 @@ fn part1(input: &str) -> usize {
             used: *used,
             free: *free,
         })
-        .collect::<Vec<_>>();
+        .collect::<Vec<_>>()
+}
+
+fn part1(input: &str) -> usize {
+    let with_ids = parse_input(input);
     let mut backwards = with_ids.clone().into_iter().rev().collect::<Vec<_>>();
     let mut nums = vec![];
     let len = backwards.len();
@@ -73,10 +74,11 @@ fn part1(input: &str) -> usize {
             }
         }
     }
-    nums[..nums.len() - num_replaced]
-        .iter()
+    nums.iter()
+        .take(nums.len() - num_replaced)
         .enumerate()
-        .fold(0, |acc, (i, val)| acc + i * val)
+        .map(|(i, val)| i * val)
+        .sum()
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -87,28 +89,7 @@ enum Item {
 }
 
 fn part2(input: &str) -> usize {
-    let nums = input
-        .chars()
-        .map(|c| c.to_digit(10).unwrap() as usize)
-        .collect::<Vec<_>>();
-    assert!(nums.len() % 2 == 1);
-    let mut items = vec![];
-    for (curr, next) in nums.iter().tuples() {
-        items.push(*curr);
-        items.push(*next);
-    }
-    items.push(*nums.last().unwrap());
-    items.push(0); // To make len even
-    let with_ids: Vec<DiskMapEntry> = items
-        .iter()
-        .tuples()
-        .enumerate()
-        .map(|(id, (used, free))| DiskMapEntry {
-            id,
-            used: *used,
-            free: *free,
-        })
-        .collect::<Vec<_>>();
+    let with_ids = parse_input(input);
     let mut items = vec![];
     for entry in &with_ids {
         items.extend(vec![Item::Id(entry.id); entry.used]);
@@ -139,15 +120,19 @@ fn part2(input: &str) -> usize {
             }
         }
     }
-    items.iter().enumerate().fold(0, |acc, (i, val)| match val {
-        Item::Id(val) => acc + i * val,
-        _ => acc,
-    })
+    items
+        .iter()
+        .enumerate()
+        .filter_map(|(i, val)| match val {
+            Item::Id(val) => Some(i * val),
+            _ => None,
+        })
+        .sum()
 }
 
 fn main() {
-    test_part1(|| part1(TEST), 1928);
-    answer_part1(|| part1(INPUT), 6349606724455);
-    test_part2(|| part2(TEST), 2858);
-    answer_part2(|| part2(INPUT), 6376648986651);
+    part1_test!(1928);
+    part1_answer!(6349606724455);
+    part2_test!(2858);
+    part2_answer!(6376648986651);
 }

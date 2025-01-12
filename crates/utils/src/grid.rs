@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::marker::PhantomData;
-use std::ops::{Add, Div, Index, IndexMut, Mul, Sub};
+use std::ops::{Add, DerefMut, Div, Index, IndexMut, Mul, Sub};
 
 pub type Position = (usize, usize);
 
